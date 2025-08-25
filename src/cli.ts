@@ -51,10 +51,10 @@ jobCommand
   });
 
 jobCommand
-  .command("submit [inputs...]")
+  .command("submit [input]")
   .description("Submit job")
-  .action(async (inputs: string[]) => {
-    await job.handleJobSubmit(inputs || []);
+  .action(async (input: string) => {
+    await job.handleJobSubmit(input);
   });
 
 jobCommand

@@ -198,25 +198,16 @@ export async function handleJobCancel(jobId: string): Promise<void> {
   }
 }
 
-export async function handleJobSubmit(inputs: string[]): Promise<void> {
-  if (inputs.length === 0) {
-    logger.error("Please provide an input JSONL file");
+export async function handleJobSubmit(input: string): Promise<void> {
+  if (!input) {
+    logger.error("Please provide a input JSONL file");
     logger.info("");
     logger.info("Example:");
     logger.info("  gemini-batch job submit sample.jsonl");
     process.exit(1);
   }
 
-  if (inputs.length > 1) {
-    logger.error("Please provide only one input JSONL file");
-    logger.info("");
-    logger.info("Example:");
-    logger.info("  gemini-batch job submit sample.jsonl");
-    process.exit(1);
-  }
-
-  const inputFile = resolve(inputs[0]!);
-
+  const inputFile = resolve(input);
   const processor = new BatchProcessor();
 
   try {
