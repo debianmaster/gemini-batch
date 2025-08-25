@@ -43,11 +43,11 @@
   "author": "zoubingwu@gmail.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/zoubingwu/poly-batch/issues"
+    "url": "https://github.com/zoubingwu/gemini-batch/issues"
   },
-  "homepage": "https://github.com/zoubingwu/poly-batch#readme",
+  "homepage": "https://github.com/zoubingwu/gemini-batch#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zoubingwu/poly-batch.git"
+    "url": "git+https://github.com/zoubingwu/gemini-batch.git"
   }
 }
