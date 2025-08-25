@@ -11,15 +11,15 @@ importers:
       '@google/genai':
         specifier: 1.15.0
         version: 1.15.0
-      cac:
-        specifier: 6.7.14
-        version: 6.7.14
       chalk:
         specifier: 5.6.0
         version: 5.6.0
       cli-table3:
         specifier: 0.6.5
         version: 0.6.5
+      commander:
+        specifier: 14.0.0
+        version: 14.0.0
       dotenv:
         specifier: 17.2.1
         version: 17.2.1
@@ -248,6 +248,10 @@ packages:
   cli-table3@0.6.5:
     resolution: {integrity: sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==}
     engines: {node: 10.* || >= 12.*}
+
+  commander@14.0.0:
+    resolution: {integrity: sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA==}
+    engines: {node: '>=20'}
 
   debug@4.4.1:
     resolution: {integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==}
@@ -741,6 +745,8 @@ snapshots:
       string-width: 4.2.3
     optionalDependencies:
       '@colors/colors': 1.5.0
+
+  commander@14.0.0: {}
 
   debug@4.4.1:
     dependencies:
