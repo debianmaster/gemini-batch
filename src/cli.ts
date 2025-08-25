@@ -1,9 +1,11 @@
 import "dotenv/config";
-
+import { homedir } from "node:os";
+import path from "node:path";
 import { Command } from "commander";
-import * as config from "./command/config.js";
+import * as configCmd from "./command/config.js";
 import * as file from "./command/file.js";
 import * as job from "./command/job.js";
+import { config } from "./config.js";
 
 const program = new Command();
 
@@ -21,28 +23,28 @@ configCommand
   .command("list")
   .description("List current configuration")
   .action(async () => {
-    await config.handleConfigList();
+    await configCmd.handleConfigList();
   });
 
 configCommand
   .command("set-key <apiKey>")
   .description("Set API key")
   .action(async (apiKey: string) => {
-    await config.handleConfigSetKey(apiKey);
+    await configCmd.handleConfigSetKey(apiKey);
   });
 
 configCommand
   .command("set-model <model>")
   .description("Set model")
   .action(async (model: string) => {
-    await config.handleConfigSetModel(model);
+    await configCmd.handleConfigSetModel(model);
   });
 
 configCommand
   .command("reset")
   .description("Reset configuration")
   .action(async () => {
-    await config.handleConfigReset();
+    await configCmd.handleConfigReset();
   });
 
 // Job commands
@@ -65,8 +67,6 @@ jobCommand
   .action(async (inputs: string[], options) => {
     await job.handleJobSubmit(inputs || [], {
       output: options.output,
-      maxConcurrent: parseInt(options.maxConcurrent),
-      checkInterval: parseInt(options.checkInterval),
     });
   });
 
@@ -87,9 +87,12 @@ jobCommand
 jobCommand
   .command("download <jobId>")
   .description("Download job results")
-  .option("--output <dir>", "Output directory for results", "./results")
+  .option("--output <dir>", "Output directory for results")
   .action(async (jobId: string, options) => {
-    await job.handleJobDownload(jobId, { output: options.output });
+    await config.load();
+    await job.handleJobDownload(jobId, {
+      output: options.output ?? path.resolve(config.configDir, "results"),
+    });
   });
 
 // File commands
