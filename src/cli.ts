@@ -26,15 +26,17 @@ configCommand
   });
 
 configCommand
-  .command("set-key <apiKey>")
-  .description("Set API key")
+  .command("set-key")
+  .description("Set Gemini API key")
+  .argument("<apiKey>", "Your gemini API key")
   .action(async (apiKey: string) => {
     await configCmd.handleConfigSetKey(apiKey);
   });
 
 configCommand
-  .command("set-model <model>")
-  .description("Set model")
+  .command("set-model")
+  .description("Set default model")
+  .argument("<model>", "Your default gemini model")
   .action(async (model: string) => {
     await configCmd.handleConfigSetModel(model);
   });
@@ -45,36 +47,40 @@ const jobCommand = program.command("job").description("Job management");
 jobCommand
   .command("list")
   .description("List jobs")
-  .option("--limit <num>", "Number of jobs to display", "20")
+  .option("-n, --limit <num>", "Number of jobs to display", "20")
   .action(async (options) => {
     await job.handleJobList({ limit: parseInt(options.limit) });
   });
 
 jobCommand
-  .command("submit [input]")
-  .description("Submit job")
+  .command("submit")
+  .description("Submit batch processing job")
+  .argument("[input]", "Path to input JSONL file")
   .action(async (input: string) => {
     await job.handleJobSubmit(input);
   });
 
 jobCommand
-  .command("cancel <jobId>")
+  .command("cancel")
   .description("Cancel job")
+  .argument("<jobId>", "ID of the job to cancel")
   .action(async (jobId: string) => {
     await job.handleJobCancel(jobId);
   });
 
 jobCommand
-  .command("get <jobId>")
+  .command("get")
   .description("Get job details")
+  .argument("<jobId>", "ID of the job to get")
   .action(async (jobId: string) => {
     await job.handleJobGet(jobId);
   });
 
 jobCommand
-  .command("download <jobId>")
-  .description("Download job results")
-  .option("--output <dir>", "Output directory for results")
+  .command("download")
+  .description("Download job result")
+  .argument("<jobId>", "ID of the job to download results for")
+  .option("-o, --output <dir>", "Output directory for results")
   .action(async (jobId: string, options) => {
     await config.load();
     await job.handleJobDownload(jobId, {
@@ -88,14 +94,15 @@ const fileCommand = program.command("file").description("File management");
 fileCommand
   .command("list")
   .description("List files")
-  .option("--limit <num>", "Number of files to display", "10")
+  .option("-n, --limit <num>", "Number of files to display", "10")
   .action(async (options) => {
     await file.handleFileList({ limit: parseInt(options.limit) });
   });
 
 fileCommand
-  .command("get <fileName>")
+  .command("get")
   .description("Get file details")
+  .argument("<fileName>", "Name or display name of the file")
   .action(async (fileName: string) => {
     await file.handleFileGet(fileName);
   });
@@ -104,16 +111,20 @@ fileCommand
   .command("create")
   .description("Create a new jsonl file for batch processing")
   .requiredOption(
-    "--prompt <prompt or path>",
+    "-p, --prompt <prompt or path>",
     "Prompt text or path to prompt file",
   )
   .requiredOption(
-    "--input <input>",
+    "-i, --input <input>",
     "File glob pattern (e.g., './input/*.md') or JSON array field (e.g., 'data.json:items')",
   )
-  .requiredOption("--output <path>", "Output JSONL file path")
+  .requiredOption("-o, --output <path>", "Output JSONL file path")
   .action(async (options) => {
-    await file.handleFileCreate(options);
+    await config.load();
+    await file.handleFileCreate({
+      ...options,
+      model: config.getModel(),
+    });
   });
 
 program.parse();

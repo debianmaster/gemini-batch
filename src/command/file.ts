@@ -97,13 +97,12 @@ export async function handleFileGet(fileName: string): Promise<void> {
   }
 }
 
-interface CreateOptions {
+export async function handleFileCreate(options: {
   prompt: string;
   input: string;
   output: string;
-}
-
-export async function handleFileCreate(options: CreateOptions): Promise<void> {
+  model: string;
+}): Promise<void> {
   try {
     logger.info("Creating JSONL file for batch processing...");
 
@@ -114,7 +113,7 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
     }
 
     // Collect all input data
-    let inputData: string[] = [];
+    let inputData: { key: string; value: string }[] = [];
 
     const jsonArrayMatch = options.input.match(/^(.+\.json):(.+)$/);
     if (jsonArrayMatch) {
@@ -144,9 +143,12 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
         return;
       }
 
-      inputData = arrayData.map((item) =>
-        typeof item === "string" ? item : JSON.stringify(item),
-      );
+      inputData = arrayData.map((item, index) => {
+        return {
+          key: `options.input_${index}`,
+          value: typeof item === "string" ? item : JSON.stringify(item),
+        };
+      });
     } else {
       logger.info(`Matching files with pattern: ${options.input}`);
       const matchedFiles = await glob(options.input);
@@ -162,7 +164,10 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
         if (fs.existsSync(filePath)) {
           try {
             const content = await fs.promises.readFile(filePath, "utf-8");
-            inputData.push(content.trim());
+            inputData.push({
+              key: path.basename(filePath),
+              value: content.trim(),
+            });
           } catch (error) {
             logger.warn(
               `Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
@@ -192,6 +197,7 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
       const input = inputData[index];
       const request = {
         key: `request-${index + 1}`,
+        model: options.model,
         request: {
           contents: [
             {
