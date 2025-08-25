@@ -40,13 +40,6 @@ configCommand
     await configCmd.handleConfigSetModel(model);
   });
 
-configCommand
-  .command("reset")
-  .description("Reset configuration")
-  .action(async () => {
-    await configCmd.handleConfigReset();
-  });
-
 // Job commands
 const jobCommand = program.command("job").description("Job management");
 
@@ -61,13 +54,8 @@ jobCommand
 jobCommand
   .command("submit [inputs...]")
   .description("Submit job")
-  .option("--output <dir>", "Output directory for results", "./results")
-  .option("--max-concurrent <num>", "Maximum concurrent jobs", "5")
-  .option("--check-interval <seconds>", "Status check interval in seconds", "5")
   .action(async (inputs: string[], options) => {
-    await job.handleJobSubmit(inputs || [], {
-      output: options.output,
-    });
+    await job.handleJobSubmit(inputs || [], {});
   });
 
 jobCommand

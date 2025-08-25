@@ -14,10 +14,6 @@ export interface BatchJobResult {
 }
 
 export interface GeminiBatchConfig {
-  gemini: {
-    apiKey?: string;
-    model?: string;
-  };
-  maxConcurrentJobs: number;
-  checkInterval: number;
+  apiKey?: string;
+  model?: string;
 }

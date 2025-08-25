@@ -200,50 +200,46 @@ export async function handleJobCancel(jobId: string): Promise<void> {
 
 export async function handleJobSubmit(
   inputs: string[],
-  options: {
-    output: string;
-  },
+  options: {},
 ): Promise<void> {
   if (inputs.length === 0) {
-    logger.error("Please provide at least one input file or directory");
+    logger.error("Please provide an input JSONL file");
     logger.info("");
     logger.info("Example:");
     logger.info("  gemini-batch job submit sample.jsonl");
-    logger.info(
-      "  gemini-batch job submit input1.jsonl input2.jsonl --output ./results",
-    );
     process.exit(1);
   }
 
-  const outputDir = resolve(options.output);
-  const resolvedInputs = inputs.map((input: string) => resolve(input));
+  if (inputs.length > 1) {
+    logger.error("Please provide only one input JSONL file");
+    logger.info("");
+    logger.info("Example:");
+    logger.info("  gemini-batch job submit sample.jsonl");
+    process.exit(1);
+  }
+
+  const inputFile = resolve(inputs[0]!);
 
   const processor = new BatchProcessor();
 
   try {
-    logger.createSpinner(`Processing batch jobs with Gemini...`);
+    logger.createSpinner(`Submitting batch job to Gemini...`);
     logger.startSpinner();
 
-    const results = await processor.processInputs(resolvedInputs, outputDir);
+    const batchJob = await processor.submitJob(inputFile);
 
     logger.stopSpinner();
 
-    const successful = results.filter((r) => r.success).length;
-    const failed = results.filter((r) => !r.success).length;
-
-    logger.success(`Processing completed!`);
-    logger.info(`Total jobs: ${results.length}`);
-    logger.info(`Successful: ${successful}`);
-    if (failed > 0) {
-      logger.warn(`Failed: ${failed}`);
-    }
-    if (successful > 0) {
-      logger.info(`Results saved to: ${outputDir}`);
-    }
+    logger.success(`Job submitted successfully!`);
+    logger.info(`Job ID: ${batchJob.id}`);
+    logger.info("Use 'gemini-batch job get <job-id>' to check status");
+    logger.info(
+      "Use 'gemini-batch job download <job-id>' to download results when completed",
+    );
   } catch (error) {
     logger.stopSpinner();
     logger.error(
-      `Processing failed: ${error instanceof Error ? error.message : String(error)}`,
+      `Job submission failed: ${error instanceof Error ? error.message : String(error)}`,
     );
     process.exit(1);
   } finally {

@@ -54,22 +54,22 @@ export class Config {
 
   getApiKey(): string | undefined {
     return (
-      this.config.gemini.apiKey ||
+      this.config.apiKey ||
       process.env.GEMINI_API_KEY ||
       process.env.GOOGLE_GENERATIVE_AI_API_KEY
     );
   }
 
   setApiKey(apiKey: string): void {
-    this.config.gemini.apiKey = apiKey;
+    this.config.apiKey = apiKey;
   }
 
   getModel(): string {
-    return this.config.gemini.model || "gemini-2.0-flash-exp";
+    return this.config.model || "gemini-2.0-flash-exp";
   }
 
   setModel(model: string): void {
-    this.config.gemini.model = model;
+    this.config.model = model;
   }
 }
 

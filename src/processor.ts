@@ -56,125 +56,27 @@ export class BatchProcessor {
     return await provider.downloadBatchResults(batchJob, outputFilePath);
   }
 
-  async processFile(
-    inputFilePath: string,
-    outputDir: string,
-  ): Promise<BatchJobResult> {
-    try {
-      // Upload file
-      const fileId = await this.uploadFile(inputFilePath);
-
-      // Create batch job
-      const batchJob = await this.createBatchJob(fileId);
-      if (!batchJob) {
-        return {
-          jobId: "unknown",
-          success: false,
-        };
-      }
-
-      // Monitor job status
-      const result = await this.monitorBatchJob(batchJob, outputDir);
-      return result;
-    } catch (error) {
-      logger.error(`Error processing file ${inputFilePath}: ${error}`);
-      return {
-        jobId: "unknown",
-        success: false,
-      };
+  async submitJob(inputPath: string): Promise<BatchJob> {
+    // Check if input is a valid JSONL file
+    const stat = await fs.stat(inputPath);
+    if (!stat.isFile()) {
+      throw new Error(`Input path is not a file: ${inputPath}`);
     }
+
+    if (extname(inputPath).toLowerCase() !== ".jsonl") {
+      throw new Error(`Input file must be a JSONL file: ${inputPath}`);
+    }
+
+    // Upload file and create batch job
+    const fileId = await this.uploadFile(inputPath);
+    const batchJob = await this.createBatchJob(fileId);
+
+    if (!batchJob) {
+      throw new Error("Failed to create batch job");
+    }
+
+    return batchJob;
   }
-
-  private async monitorBatchJob(
-    batchJob: BatchJob,
-    outputDir: string,
-  ): Promise<BatchJobResult> {
-    let checkInterval = config.getConfig().checkInterval * 1000; // Convert to milliseconds
-    const maxInterval = 60000; // 60 seconds max
-
-    while (true) {
-      const status = await this.checkBatchStatus(batchJob.id);
-
-      if (status === "completed") {
-        const outputFile = join(outputDir, `${batchJob.id}_results.jsonl`);
-        const success = await this.downloadBatchResults(batchJob, outputFile);
-
-        return {
-          jobId: batchJob.id,
-          success,
-          ...(success && { outputFilePath: outputFile }),
-        };
-      } else if (
-        status &&
-        ["failed", "expired", "cancelled", "error"].includes(status)
-      ) {
-        logger.error(`Batch job ${batchJob.id} ${status}`);
-        return {
-          jobId: batchJob.id,
-          success: false,
-        };
-      } else if (!status) {
-        logger.error(`Failed to retrieve status for batch job ${batchJob.id}`);
-        return {
-          jobId: batchJob.id,
-          success: false,
-        };
-      }
-
-      // Wait before next check with exponential backoff
-      await new Promise((resolve) => setTimeout(resolve, checkInterval));
-      checkInterval = Math.min(checkInterval * 1.5, maxInterval);
-    }
-  }
-
-  async processInputs(
-    inputPaths: string[],
-    outputDir: string,
-    maxConcurrentJobs?: number,
-  ): Promise<BatchJobResult[]> {
-    // Ensure output directory exists
-    await fs.mkdir(outputDir, { recursive: true });
-
-    // Find all JSONL files
-    const inputFiles: string[] = [];
-    for (const path of inputPaths) {
-      const stat = await fs.stat(path);
-      if (stat.isDirectory()) {
-        const files = await fs.readdir(path);
-        for (const file of files) {
-          if (extname(file).toLowerCase() === ".jsonl") {
-            inputFiles.push(join(path, file));
-          }
-        }
-      } else if (extname(path).toLowerCase() === ".jsonl") {
-        inputFiles.push(path);
-      } else {
-        logger.warn(`Skipping non-JSONL file: ${path}`);
-      }
-    }
-
-    if (inputFiles.length === 0) {
-      logger.warn("No JSONL files found in the provided paths");
-      return [];
-    }
-
-    // Process files with concurrency limit
-    const concurrency = maxConcurrentJobs || config.maxConcurrentJobs;
-    const results: BatchJobResult[] = [];
-
-    for (let i = 0; i < inputFiles.length; i += concurrency) {
-      const batch = inputFiles.slice(i, i + concurrency);
-      const batchPromises = batch.map((file) =>
-        this.processFile(file, outputDir),
-      );
-
-      const batchResults = await Promise.all(batchPromises);
-      results.push(...batchResults);
-    }
-
-    return results;
-  }
-
   async listJobs(limit?: number) {
     const provider = this.getProvider();
     return await provider.listJobs(limit);
