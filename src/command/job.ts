@@ -20,7 +20,14 @@ export async function handleJobList(options: { limit: number }): Promise<void> {
     }
 
     const table = new Table({
-      head: ["Job Name", "Display Name", "Status", "Created", "Dest"],
+      head: [
+        "Job Name",
+        "Display Name",
+        "Status",
+        "Created Time",
+        "End Time",
+        "Dest",
+      ],
       style: {
         head: [],
         border: [],
@@ -33,6 +40,7 @@ export async function handleJobList(options: { limit: number }): Promise<void> {
         job.displayName,
         job.state?.replace("JOB_STATE_", "") ?? "-",
         job.createTime ? formatDate(job.createTime) : "-",
+        job.endTime ? formatDate(job.endTime) : "-",
         job.dest?.fileName ?? "-",
       ]);
     }
@@ -76,7 +84,7 @@ export async function handleJobGet(jobId: string): Promise<void> {
       ["Status", job.state?.replace("JOB_STATE_", "") || "-"],
       ["Model", job.model || "-"],
       ["Created Time", job.createTime ? formatDate(job.createTime) : "-"],
-      ["Source File", job.src?.fileName || "-"],
+      ["End Time", job.endTime ? formatDate(job.endTime) : "-"],
       ["Destination File", job.dest?.fileName || "-"],
     );
 
