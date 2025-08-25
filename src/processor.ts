@@ -62,7 +62,7 @@ export class BatchProcessor {
     return await provider.listJobs(limit);
   }
 
-  async listFiles(limit?: number): Promise<any[]> {
+  async listFiles(limit?: number) {
     const provider = this.getProvider();
     return await provider.listFiles(limit);
   }

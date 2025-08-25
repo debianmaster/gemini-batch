@@ -29,6 +29,9 @@ importers:
       ora:
         specifier: 8.2.0
         version: 8.2.0
+      pretty-bytes:
+        specifier: 7.0.1
+        version: 7.0.1
       zod:
         specifier: 4.1.1
         version: 4.1.1
@@ -489,6 +492,10 @@ packages:
   picomatch@4.0.3:
     resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
     engines: {node: '>=12'}
+
+  pretty-bytes@7.0.1:
+    resolution: {integrity: sha512-285/jRCYIbMGDciDdrw0KPNC4LKEEwz/bwErcYNxSJOi4CpGUuLpb9gQpg3XJP0XYj9ldSRluXxih4lX2YN8Xw==}
+    engines: {node: '>=20'}
 
   quansync@0.2.11:
     resolution: {integrity: sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==}
@@ -1055,6 +1062,8 @@ snapshots:
   pathe@2.0.3: {}
 
   picomatch@4.0.3: {}
+
+  pretty-bytes@7.0.1: {}
 
   quansync@0.2.11: {}
 

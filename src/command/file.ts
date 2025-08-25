@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import prettyBytes from "pretty-bytes";
 import path from "node:path";
 import { glob } from "glob";
 import { BatchProcessor } from "../processor.js";
@@ -34,7 +35,7 @@ export async function handleFileList(options: {
       table.push([
         file.name || "Unknown",
         file.displayName || "-",
-        file.sizeBytes ? `${Math.round(file.sizeBytes / 1024)}KB` : "-",
+        file.sizeBytes ? `${prettyBytes(Number(file.sizeBytes))}` : "-",
         file.mimeType || "-",
         file.createTime ? formatDate(file.createTime) : "-",
       ]);
@@ -77,7 +78,7 @@ export async function handleFileGet(fileName: string): Promise<void> {
     logger.log(`Name: ${file.name || "Unknown"}`);
     logger.log(`Display Name: ${file.displayName || "-"}`);
     logger.log(
-      `Size: ${file.sizeBytes ? `${Math.round(file.sizeBytes / 1024)}KB` : "-"}`,
+      `Size: ${file.sizeBytes ? `${prettyBytes(Number(file.sizeBytes))}` : "-"}`,
     );
     logger.log(`MIME Type: ${file.mimeType || "-"}`);
     logger.log(

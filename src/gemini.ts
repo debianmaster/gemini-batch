@@ -1,4 +1,4 @@
-import { type BatchJob, GoogleGenAI } from "@google/genai";
+import { type BatchJob, GoogleGenAI, type File } from "@google/genai";
 import { logger } from "./utils.js";
 
 export class GeminiProvider {
@@ -68,12 +68,12 @@ export class GeminiProvider {
     }
   }
 
-  async listFiles(limit?: number): Promise<any[]> {
+  async listFiles(limit?: number): Promise<File[]> {
     try {
       const pager = await this.client.files.list({
         config: { pageSize: limit || 10 },
       });
-      const files: any[] = [];
+      const files: File[] = [];
 
       for await (const file of pager) {
         files.push(file);
