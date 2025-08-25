@@ -198,10 +198,7 @@ export async function handleJobCancel(jobId: string): Promise<void> {
   }
 }
 
-export async function handleJobSubmit(
-  inputs: string[],
-  options: {},
-): Promise<void> {
+export async function handleJobSubmit(inputs: string[]): Promise<void> {
   if (inputs.length === 0) {
     logger.error("Please provide an input JSONL file");
     logger.info("");

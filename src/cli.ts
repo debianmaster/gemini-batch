@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { homedir } from "node:os";
 import path from "node:path";
 import { Command } from "commander";
 import * as configCmd from "./command/config.js";
@@ -54,8 +53,8 @@ jobCommand
 jobCommand
   .command("submit [inputs...]")
   .description("Submit job")
-  .action(async (inputs: string[], options) => {
-    await job.handleJobSubmit(inputs || [], {});
+  .action(async (inputs: string[]) => {
+    await job.handleJobSubmit(inputs || []);
   });
 
 jobCommand

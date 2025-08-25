@@ -73,19 +73,6 @@ export function createSpinner(text: string): Ora {
   });
 }
 
-export function formatProvider(provider: string): string {
-  switch (provider.toLowerCase()) {
-    case "openai":
-      return chalk.green(provider);
-    case "gemini":
-      return chalk.blue(provider);
-    case "anthropic":
-      return chalk.magenta(provider);
-    default:
-      return chalk.gray(provider);
-  }
-}
-
 export function formatDate(t: number | string): string {
   return new Date(t).toLocaleString();
 }
