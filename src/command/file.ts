@@ -189,7 +189,14 @@ export async function handleFileCreate(options: {
 
       logger.info(`Found ${matchedFiles.length} files`);
 
-      matchedFiles.sort();
+      matchedFiles.sort((a, b) => {
+        const aBasename = path.basename(a);
+        const bBasename = path.basename(b);
+        return aBasename.localeCompare(bBasename, undefined, {
+          numeric: true,
+          sensitivity: 'base'
+        });
+      });
 
       for (const filePath of matchedFiles) {
         if (fs.existsSync(filePath)) {
