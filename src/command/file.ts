@@ -105,27 +105,6 @@ interface CreateOptions {
 
 export async function handleFileCreate(options: CreateOptions): Promise<void> {
   try {
-    if (!options.prompt) {
-      logger.error(
-        "Prompt is required. Use --prompt to specify a prompt or path to a prompt file.",
-      );
-      return;
-    }
-
-    if (!options.input) {
-      logger.error(
-        "Input is required. Use --input to specify file patterns or JSON data.",
-      );
-      return;
-    }
-
-    if (!options.output) {
-      logger.error(
-        "Output path is required. Use --output to specify the output JSONL file path.",
-      );
-      return;
-    }
-
     logger.info("Creating JSONL file for batch processing...");
 
     let promptText = options.prompt;
