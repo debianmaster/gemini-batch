@@ -33,21 +33,38 @@ export class BatchProcessor {
     return this.provider;
   }
 
-  async submitJob(inputPath: string): Promise<BatchJob> {
-    // Check if input is a valid JSONL file
-    const stat = await fs.stat(inputPath);
-    if (!stat.isFile()) {
-      throw new Error(`Input path is not a file: ${inputPath}`);
-    }
-
-    if (extname(inputPath).toLowerCase() !== ".jsonl") {
-      throw new Error(`Input file must be a JSONL file: ${inputPath}`);
-    }
-
+  async submitJob(input: string): Promise<BatchJob> {
     const provider = this.getProvider();
+    let fileId: string;
 
-    // Upload file and create batch job
-    const fileId = await provider.uploadFile(inputPath);
+    // Check if input is a file ID (starts with 'files/' pattern) or a local file path
+    if (input.startsWith('files/')) {
+      // Input is a file ID, validate it exists
+      logger.info(`Using existing file ID: ${input}`);
+      const file = await provider.getFile(input);
+      if (!file) {
+        throw new Error(`File not found with ID: ${input}`);
+      }
+      if (file.state !== 'ACTIVE') {
+        throw new Error(`File ${input} is not active. State: ${file.state}`);
+      }
+      fileId = input;
+    } else {
+      // Input is a local file path, upload it
+      const stat = await fs.stat(input);
+      if (!stat.isFile()) {
+        throw new Error(`Input path is not a file: ${input}`);
+      }
+
+      if (extname(input).toLowerCase() !== ".jsonl") {
+        throw new Error(`Input file must be a JSONL file: ${input}`);
+      }
+
+      // Upload file
+      fileId = await provider.uploadFile(input);
+    }
+
+    // Create batch job
     const batchJob = await provider.createBatchJob(fileId);
 
     if (!batchJob) {

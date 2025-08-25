@@ -56,7 +56,7 @@ jobCommand
 jobCommand
   .command("submit")
   .description("Submit batch processing job")
-  .argument("[input]", "Path to input JSONL file")
+  .argument("[input]", "Path to input JSONL file or existing file ID (starts with 'files/')")
   .action(async (input: string) => {
     await job.handleJobSubmit(input);
   });

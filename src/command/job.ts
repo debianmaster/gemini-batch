@@ -234,21 +234,23 @@ export async function handleJobCancel(jobId: string): Promise<void> {
 
 export async function handleJobSubmit(input: string): Promise<void> {
   if (!input) {
-    logger.error("Please provide a input JSONL file");
+    logger.error("Please provide an input JSONL file or file ID");
     logger.info("");
-    logger.info("Example:");
-    logger.info("  gemini-batch job submit sample.jsonl");
+    logger.info("Examples:");
+    logger.info("  gemini-batch job submit sample.jsonl                    # Local file");
+    logger.info("  gemini-batch job submit files/xyz123                   # Existing file ID");
+    logger.info("");
+    logger.info("Use 'gemini-batch file list' to see uploaded files");
     process.exit(1);
   }
 
-  const inputFile = resolve(input);
   const processor = new BatchProcessor();
 
   try {
     logger.createSpinner(`Submitting batch job to Gemini...`);
     logger.startSpinner();
 
-    const batchJob = await processor.submitJob(inputFile);
+    const batchJob = await processor.submitJob(input);
 
     logger.stopSpinner();
 
@@ -262,6 +264,15 @@ export async function handleJobSubmit(input: string): Promise<void> {
     logger.error(
       `Job submission failed: ${error instanceof Error ? error.message : String(error)}`,
     );
+
+    // Provide helpful hints based on the error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("File not found with ID")) {
+      logger.info("Tip: Use 'gemini-batch file list' to see available files");
+    } else if (errorMessage.includes("not a file") || errorMessage.includes("JSONL")) {
+      logger.info("Tip: Make sure the file path is correct and the file is in JSONL format");
+    }
+
     process.exit(1);
   } finally {
     await processor.close();

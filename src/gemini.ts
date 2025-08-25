@@ -96,6 +96,16 @@ export class GeminiProvider {
     }
   }
 
+  async getFile(fileId: string): Promise<File | null> {
+    try {
+      const file = await this.client.files.get({ name: fileId });
+      return file;
+    } catch (error) {
+      logger.error(`Error getting file ${fileId}: ${error}`);
+      return null;
+    }
+  }
+
   async downloadJobResults(
     jobId: string,
     outputFilePath: string,
