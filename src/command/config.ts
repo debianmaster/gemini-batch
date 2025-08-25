@@ -3,7 +3,6 @@ import { logger, maskApiKey } from "../utils.js";
 
 export async function handleConfigList(): Promise<void> {
   await config.load();
-  const cfg = config.getConfig();
 
   logger.info("Current Configuration:");
   logger.log("");

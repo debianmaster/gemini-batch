@@ -12,8 +12,3 @@ export interface BatchJobResult {
   success: boolean;
   outputFilePath?: string;
 }
-
-export interface GeminiBatchConfig {
-  apiKey?: string;
-  model?: string;
-}
