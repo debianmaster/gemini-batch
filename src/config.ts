@@ -14,14 +14,12 @@ const ConfigSchema = z.object({
       model: z.string().optional().default(DEFAULT_MODE),
     })
     .default({ model: DEFAULT_MODE }),
-  maxConcurrentJobs: z.number().default(5),
-  checkInterval: z.number().default(30),
 });
 
 export class Config {
   private config: GeminiBatchConfig;
-  private configDir: string;
-  private configFile: string;
+  configDir: string;
+  configFile: string;
 
   constructor() {
     this.configDir = join(homedir(), ".gemini-batch");
@@ -72,22 +70,6 @@ export class Config {
 
   setModel(model: string): void {
     this.config.gemini.model = model;
-  }
-
-  get maxConcurrentJobs(): number {
-    return this.config.maxConcurrentJobs;
-  }
-
-  set maxConcurrentJobs(value: number) {
-    this.config.maxConcurrentJobs = value;
-  }
-
-  get checkInterval(): number {
-    return this.config.checkInterval;
-  }
-
-  set checkInterval(value: number) {
-    this.config.checkInterval = value;
   }
 }
 
