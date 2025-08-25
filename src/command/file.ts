@@ -1,6 +1,6 @@
 import { config } from "../config.js";
 import { BatchProcessor } from "../processor.js";
-import { createSpinner, formatDate, logger } from "../utils.js";
+import { formatDate, logger } from "../utils.js";
 
 export async function handleFileList(options: {
   limit: number;
@@ -9,11 +9,11 @@ export async function handleFileList(options: {
   const processor = new BatchProcessor();
 
   try {
-    const spinner = createSpinner("Fetching files from Gemini...");
-    spinner.start();
+    logger.createSpinner("Fetching files from Gemini...");
+    logger.startSpinner();
 
     const files = await processor.listFiles(options.limit);
-    spinner.stop();
+    logger.stopSpinner();
 
     if (files.length === 0) {
       logger.warn("No files found");
@@ -41,6 +41,7 @@ export async function handleFileList(options: {
 
     logger.log(table.toString());
   } catch (error) {
+    logger.stopSpinner();
     logger.error(
       `Failed to fetch files: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -54,11 +55,11 @@ export async function handleFileGet(fileName: string): Promise<void> {
   const processor = new BatchProcessor();
 
   try {
-    const spinner = createSpinner(`Fetching file details for ${fileName}...`);
-    spinner.start();
+    logger.createSpinner(`Fetching file details for ${fileName}...`);
+    logger.startSpinner();
 
     const files = await processor.listFiles();
-    spinner.stop();
+    logger.stopSpinner();
 
     const file = files.find(
       (f) => f.name === fileName || f.displayName === fileName,
@@ -87,6 +88,7 @@ export async function handleFileGet(fileName: string): Promise<void> {
       logger.log(`URI: ${file.uri}`);
     }
   } catch (error) {
+    logger.stopSpinner();
     logger.error(
       `Failed to fetch file details: ${error instanceof Error ? error.message : String(error)}`,
     );

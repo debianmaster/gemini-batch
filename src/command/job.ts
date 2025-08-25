@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import Table from "cli-table3";
 import { config } from "../config.js";
 import { BatchProcessor } from "../processor.js";
-import { createSpinner, formatDate, logger } from "../utils.js";
+import { formatDate, logger } from "../utils.js";
 
 // Job command handlers
 export async function handleJobList(options: { limit: number }): Promise<void> {
@@ -10,11 +10,11 @@ export async function handleJobList(options: { limit: number }): Promise<void> {
   const processor = new BatchProcessor();
 
   try {
-    const spinner = createSpinner("Fetching jobs from Gemini...");
-    spinner.start();
+    logger.createSpinner("Fetching jobs from Gemini...");
+    logger.startSpinner();
 
     const jobs = await processor.listJobs(options.limit);
-    spinner.stop();
+    logger.stopSpinner();
 
     if (jobs.length === 0) {
       logger.warn("No jobs found");
@@ -54,11 +54,11 @@ export async function handleJobCancel(jobId: string): Promise<void> {
   const processor = new BatchProcessor();
 
   try {
-    const spinner = createSpinner(`Cancelling job ${jobId}...`);
-    spinner.start();
+    logger.createSpinner(`Cancelling job ${jobId}...`);
+    logger.startSpinner();
 
     const success = await processor.cancelJob(jobId);
-    spinner.stop();
+    logger.stopSpinner();
 
     if (success) {
       logger.success(`Job ${jobId} cancelled successfully`);
@@ -67,6 +67,7 @@ export async function handleJobCancel(jobId: string): Promise<void> {
       process.exit(1);
     }
   } catch (error) {
+    logger.stopSpinner();
     logger.error(
       `Error cancelling job: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -117,10 +118,10 @@ export async function handleJobSubmit(
   await config.save();
 
   const processor = new BatchProcessor();
-  const spinner = createSpinner(`Processing batch jobs with Gemini...`);
 
   try {
-    spinner.start();
+    logger.createSpinner(`Processing batch jobs with Gemini...`);
+    logger.startSpinner();
 
     const results = await processor.processInputs(
       resolvedInputs,
@@ -128,7 +129,7 @@ export async function handleJobSubmit(
       options.maxConcurrent,
     );
 
-    spinner.stop();
+    logger.stopSpinner();
 
     const successful = results.filter((r) => r.success).length;
     const failed = results.filter((r) => !r.success).length;
@@ -143,7 +144,7 @@ export async function handleJobSubmit(
       logger.info(`Results saved to: ${outputDir}`);
     }
   } catch (error) {
-    spinner.stop();
+    logger.stopSpinner();
     logger.error(
       `Processing failed: ${error instanceof Error ? error.message : String(error)}`,
     );

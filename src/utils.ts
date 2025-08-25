@@ -3,6 +3,7 @@ import ora, { type Ora } from "ora";
 
 export class Logger {
   private verbose: boolean;
+  spinner: Ora | null = null;
 
   constructor(options?: { verbose: boolean }) {
     this.verbose = options?.verbose || false;
@@ -12,26 +13,54 @@ export class Logger {
     this.verbose = v;
   }
 
-  info(message: string): void {
-    if (this.verbose) {
-      console.log(chalk.blue("ℹ"), message);
+  createSpinner(text: string) {
+    this.spinner = createSpinner(text);
+  }
+
+  stopSpinner() {
+    if (this.spinner) {
+      this.spinner?.stop();
+      this.spinner = null;
     }
   }
 
+  startSpinner() {
+    if (this.spinner) {
+      this.spinner.start();
+    }
+  }
+
+  private output(message: string): void {
+    if (this.spinner) {
+      // 如果有 spinner 在运行，先停止它，输出消息，然后重新启动
+      const text = this.spinner.text;
+      this.spinner.stop();
+      console.log(message);
+      this.spinner.text = text;
+      this.spinner.start();
+    } else {
+      console.log(message);
+    }
+  }
+
+  info(message: string): void {
+    this.output(chalk.blue("ℹ") + " " + message);
+  }
+
   success(message: string): void {
-    console.log(chalk.green("✓"), message);
+    this.output(chalk.green("✓") + " " + message);
   }
 
   warn(message: string): void {
-    console.log(chalk.yellow("⚠"), message);
+    this.output(chalk.yellow("⚠") + " " + message);
   }
 
   error(message: string): void {
-    console.log(chalk.red("✗"), message);
+    this.output(chalk.red("✗") + " " + message);
   }
 
   log(message: string): void {
-    console.log(message);
+    this.output(message);
   }
 }
 
