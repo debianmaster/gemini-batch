@@ -188,6 +188,8 @@ export async function handleFileCreate(options: {
 
       logger.info(`Found ${matchedFiles.length} files`);
 
+      matchedFiles.sort();
+
       for (const filePath of matchedFiles) {
         if (fs.existsSync(filePath)) {
           try {
