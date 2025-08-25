@@ -14,7 +14,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "gemini": "./dist/cli.js"
+    "gemini-batch": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsdown",
