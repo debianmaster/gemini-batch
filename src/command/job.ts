@@ -148,10 +148,38 @@ export async function handleJobDownload(
     logger.createSpinner(`Downloading result...`);
     logger.startSpinner();
 
+    // Generate default filename
+    const defaultFilename = `${Math.floor(Date.now() / 1000)}_${jobId.split("/").pop()}.jsonl`;
+
     // Determine output file path
-    const outputFile = options.output
-      ? resolve(options.output)
-      : resolve(`${Math.floor(Date.now() / 1000)}_${jobId.split("/").pop()}.jsonl`);
+    let outputFile: string;
+    if (options.output) {
+      const fs = await import("fs/promises");
+      const outputPath = resolve(options.output);
+
+      try {
+        const stat = await fs.stat(outputPath);
+        if (stat.isDirectory()) {
+          // Output is an existing directory
+          outputFile = resolve(outputPath, defaultFilename);
+        } else {
+          // Output is an existing file, use as is
+          outputFile = outputPath;
+        }
+      } catch {
+        // Path doesn't exist, determine based on extension
+        if (outputPath.endsWith('.jsonl') || outputPath.includes('.')) {
+          // Looks like a file path
+          outputFile = outputPath;
+        } else {
+          // Looks like a directory path
+          outputFile = resolve(outputPath, defaultFilename);
+        }
+      }
+    } else {
+      // No output specified, use current directory with default filename
+      outputFile = resolve(defaultFilename);
+    }
 
     // Ensure output directory exists
     const fs = await import("fs/promises");
