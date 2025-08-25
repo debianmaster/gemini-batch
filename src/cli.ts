@@ -119,6 +119,10 @@ fileCommand
     "File glob pattern (e.g., './input/*.md') or JSON array field (e.g., 'data.json:items')",
   )
   .requiredOption("-o, --output <path>", "Output JSONL file path")
+  .option(
+    "--response-schema <path>",
+    "Path to JSON file containing response schema for structured output",
+  )
   .action(async (options) => {
     await config.load();
     await file.handleFileCreate({

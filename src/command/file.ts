@@ -102,6 +102,7 @@ export async function handleFileCreate(options: {
   input: string;
   output: string;
   model: string;
+  responseSchema?: string;
 }): Promise<void> {
   try {
     logger.info("Creating JSONL file for batch processing...");
@@ -110,6 +111,33 @@ export async function handleFileCreate(options: {
     if (fs.existsSync(options.prompt)) {
       logger.info(`Reading prompt from file: ${options.prompt}`);
       promptText = fs.readFileSync(options.prompt, "utf-8").trim();
+    }
+
+    // Handle response schema
+    let responseSchema = undefined;
+    if (options.responseSchema) {
+      if (fs.existsSync(options.responseSchema)) {
+        logger.info(
+          `Reading response schema from file: ${options.responseSchema}`,
+        );
+        try {
+          const schemaContent = fs.readFileSync(
+            options.responseSchema,
+            "utf-8",
+          );
+          responseSchema = JSON.parse(schemaContent);
+        } catch (error) {
+          logger.error(
+            `Failed to parse response schema file: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          return;
+        }
+      } else {
+        logger.error(
+          `Response schema file not found: ${options.responseSchema}`,
+        );
+        return;
+      }
     }
 
     // Collect all input data
@@ -200,13 +228,15 @@ export async function handleFileCreate(options: {
         model: options.model,
         generation_config: {
           temperature: 0, // more predictable and stable
+          responseMimeType: responseSchema ? "application/json" : undefined,
+          responseSchema: responseSchema,
         },
         request: {
           contents: [
             {
               parts: [
                 {
-                  text: `${promptText}\n\n${input}`,
+                  text: `${promptText}\n\n${input.value}`,
                 },
               ],
             },
