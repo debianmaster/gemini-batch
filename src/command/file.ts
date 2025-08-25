@@ -229,19 +229,27 @@ export async function handleFileCreate(options: {
       const request = {
         key: input.key,
         model: options.model,
-        // fuck google
-        // https://news.ycombinator.com/item?id=44528356
         generation_config: {
           temperature: 0, // more predictable and stable
-          response_mime_type: responseSchema ? "application/json" : undefined,
-          response_json_schema: responseSchema,
+          // fuck google
+          // this is also not working according to https://news.ycombinator.com/item?id=44528356
+          // so just drop it, use prompt instead
+          // response_mime_type: responseSchema ? "application/json" : undefined,
+          // response_schema: responseSchema,
         },
         request: {
+          "system_instruction": {
+            "parts": [
+              {
+                "text": promptText
+              }
+            ]
+          },
           contents: [
             {
               parts: [
                 {
-                  text: `${promptText}\n\n${input.value}`,
+                  text: input.value,
                 },
               ],
             },
