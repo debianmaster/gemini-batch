@@ -226,7 +226,7 @@ export async function handleFileCreate(options: {
       const request = {
         key: input.key,
         model: options.model,
-        generation_config: {
+        generationConfig: {
           temperature: 0, // more predictable and stable
           responseMimeType: responseSchema ? "application/json" : undefined,
           responseSchema: responseSchema,
