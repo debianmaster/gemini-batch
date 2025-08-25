@@ -1,8 +1,8 @@
-import { promises as fs } from "fs";
-import { extname } from "path";
+import { promises as fs } from "node:fs";
+import { extname } from "node:path";
+import type { BatchJob } from "@google/genai";
 import { config } from "./config.js";
 import { GeminiProvider } from "./gemini.js";
-import type { BatchJob } from "./types.js";
 import { logger } from "./utils.js";
 
 export class BatchProcessor {
@@ -33,16 +33,6 @@ export class BatchProcessor {
     return this.provider;
   }
 
-  async uploadFile(filePath: string): Promise<string> {
-    const provider = this.getProvider();
-    return await provider.uploadFile(filePath);
-  }
-
-  async createBatchJob(inputFileId: string): Promise<BatchJob | null> {
-    const provider = this.getProvider();
-    return await provider.createBatchJob(inputFileId);
-  }
-
   async submitJob(inputPath: string): Promise<BatchJob> {
     // Check if input is a valid JSONL file
     const stat = await fs.stat(inputPath);
@@ -54,9 +44,11 @@ export class BatchProcessor {
       throw new Error(`Input file must be a JSONL file: ${inputPath}`);
     }
 
+    const provider = this.getProvider();
+
     // Upload file and create batch job
-    const fileId = await this.uploadFile(inputPath);
-    const batchJob = await this.createBatchJob(fileId);
+    const fileId = await provider.uploadFile(inputPath);
+    const batchJob = await provider.createBatchJob(fileId);
 
     if (!batchJob) {
       throw new Error("Failed to create batch job");
@@ -64,6 +56,7 @@ export class BatchProcessor {
 
     return batchJob;
   }
+
   async listJobs(limit?: number) {
     const provider = this.getProvider();
     return await provider.listJobs(limit);

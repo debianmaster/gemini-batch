@@ -1,5 +1,4 @@
-import { GoogleGenAI, type BatchJob as RawGeminiBatchJob } from "@google/genai";
-import type { BatchJob } from "./types.js";
+import { type BatchJob, GoogleGenAI } from "@google/genai";
 import { logger } from "./utils.js";
 
 export class GeminiProvider {
@@ -49,22 +48,17 @@ export class GeminiProvider {
       });
       logger.success(`Batch job created successfully: ${job.name}`);
 
-      return {
-        id: job.name!,
-        status: this.normalizeStatus(job.state || "created"),
-        inputFileId,
-        createdAt: Date.now(),
-      };
+      return job;
     } catch (error) {
       logger.error(`Error creating batch job: ${error}`);
       return null;
     }
   }
 
-  async listJobs(limit?: number): Promise<RawGeminiBatchJob[]> {
+  async listJobs(limit?: number): Promise<BatchJob[]> {
     try {
       const pager = await this.client.batches.list();
-      const batches: RawGeminiBatchJob[] = [];
+      const batches: BatchJob[] = [];
 
       for await (const batch of pager) {
         batches.push(batch);
@@ -96,7 +90,7 @@ export class GeminiProvider {
       return [];
     }
   }
-  async getJob(jobId: string): Promise<RawGeminiBatchJob | null> {
+  async getJob(jobId: string): Promise<BatchJob | null> {
     try {
       const job = await this.client.batches.get({ name: jobId });
       return job;
