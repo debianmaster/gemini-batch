@@ -39,7 +39,7 @@ export async function handleFileList(options: {
       ]);
     }
 
-    console.log(table.toString());
+    logger.log(table.toString());
   } catch (error) {
     logger.error(
       `Failed to fetch files: ${error instanceof Error ? error.message : String(error)}`,

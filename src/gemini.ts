@@ -1,5 +1,6 @@
 import { GoogleGenAI, type BatchJob as RawGeminiBatchJob } from "@google/genai";
 import type { BatchJob } from "./types.js";
+import { logger } from "./utils.js";
 
 export class GeminiProvider {
   private client: GoogleGenAI;
@@ -19,7 +20,7 @@ export class GeminiProvider {
   }
 
   async uploadFile(filePath: string): Promise<string> {
-    console.log(`Uploading batch input file ${filePath}...`);
+    logger.info(`Uploading batch input file ${filePath}...`);
     try {
       const uploadedFile = await this.client.files.upload({
         file: filePath,
@@ -28,16 +29,16 @@ export class GeminiProvider {
           displayName: `batch-input-${Date.now()}.jsonl`,
         },
       });
-      console.log(`Uploaded file ${uploadedFile.name}`);
+      logger.success(`Uploaded file ${uploadedFile.name}`);
       return uploadedFile.name!;
     } catch (error) {
-      console.error(`Error uploading file ${filePath}:`, error);
+      logger.error(`Error uploading file ${filePath}: ${error}`);
       throw error;
     }
   }
 
   async createBatchJob(inputFileId: string): Promise<BatchJob | null> {
-    console.log(`Creating batch job for file ${inputFileId}...`);
+    logger.info(`Creating batch job for file ${inputFileId}...`);
     try {
       const job = await this.client.batches.create({
         model: this.model,
@@ -46,7 +47,7 @@ export class GeminiProvider {
           displayName: `batch_job_${Date.now()}`,
         },
       });
-      console.log(`Batch job created successfully: ${job.name}`);
+      logger.success(`Batch job created successfully: ${job.name}`);
 
       return {
         id: job.name!,
@@ -55,7 +56,7 @@ export class GeminiProvider {
         createdAt: Date.now(),
       };
     } catch (error) {
-      console.error(`Error creating batch job:`, error);
+      logger.error(`Error creating batch job: ${error}`);
       return null;
     }
   }
@@ -65,7 +66,7 @@ export class GeminiProvider {
       const job = await this.client.batches.get({ name: batchId });
       return this.normalizeStatus(job.state || "unknown");
     } catch (error) {
-      console.error(`Error checking batch status:`, error);
+      logger.error(`Error checking batch status: ${error}`);
       return null;
     }
   }
@@ -79,13 +80,13 @@ export class GeminiProvider {
       if (job.state?.toString() === "COMPLETED") {
         // For now, we'll assume the output is available through a different method
         // This might need to be adjusted based on the actual Gemini batch API
-        console.log(`Batch job completed: ${job.name}`);
+        logger.success(`Batch job completed: ${job.name}`);
         return true;
       }
-      console.warn(`Batch job not completed. Status: ${job.state}`);
+      logger.warn(`Batch job not completed. Status: ${job.state}`);
       return false;
     } catch (error) {
-      console.error(`Error downloading batch results:`, error);
+      logger.error(`Error downloading batch results: ${error}`);
       return false;
     }
   }
@@ -102,7 +103,7 @@ export class GeminiProvider {
 
       return batches;
     } catch (error) {
-      console.error(`Error listing jobs:`, error);
+      logger.error(`Error listing jobs: ${error}`);
       return [];
     }
   }
@@ -121,7 +122,7 @@ export class GeminiProvider {
 
       return files;
     } catch (error) {
-      console.error(`Error listing files:`, error);
+      logger.error(`Error listing files: ${error}`);
       return [];
     }
   }
@@ -130,7 +131,7 @@ export class GeminiProvider {
       await this.client.batches.cancel({ name: jobId });
       return true;
     } catch (error) {
-      console.error(`Error cancelling job ${jobId}:`, error);
+      logger.error(`Error cancelling job ${jobId}: ${error}`);
       return false;
     }
   }

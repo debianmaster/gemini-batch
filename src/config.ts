@@ -3,6 +3,7 @@ import { homedir } from "os";
 import { join } from "path";
 import { z } from "zod";
 import type { GeminiBatchConfig } from "./types.js";
+import { logger } from "./utils.js";
 
 const DEFAULT_MODE = "gemini-2.5-flash";
 
@@ -45,7 +46,7 @@ export class Config {
       await fs.mkdir(this.configDir, { recursive: true });
       await fs.writeFile(this.configFile, JSON.stringify(this.config, null, 2));
     } catch (error) {
-      console.error("Failed to save config:", error);
+      logger.error(`Failed to save config: ${error}`);
     }
   }
 

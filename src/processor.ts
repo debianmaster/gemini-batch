@@ -3,6 +3,7 @@ import { extname, join } from "path";
 import { config } from "./config.js";
 import { GeminiProvider } from "./gemini.js";
 import type { BatchJob, BatchJobResult } from "./types.js";
+import { logger } from "./utils.js";
 
 export class BatchProcessor {
   private provider: GeminiProvider | null = null;
@@ -18,7 +19,7 @@ export class BatchProcessor {
         const model = config.getModel();
         this.provider = new GeminiProvider(apiKey, model);
       } catch (error) {
-        console.warn(`Failed to initialize Gemini provider:`, error);
+        logger.warn(`Failed to initialize Gemini provider: ${error}`);
       }
     }
   }
@@ -76,7 +77,7 @@ export class BatchProcessor {
       const result = await this.monitorBatchJob(batchJob, outputDir);
       return result;
     } catch (error) {
-      console.error(`Error processing file ${inputFilePath}:`, error);
+      logger.error(`Error processing file ${inputFilePath}: ${error}`);
       return {
         jobId: "unknown",
         success: false,
@@ -107,13 +108,13 @@ export class BatchProcessor {
         status &&
         ["failed", "expired", "cancelled", "error"].includes(status)
       ) {
-        console.error(`Batch job ${batchJob.id} ${status}`);
+        logger.error(`Batch job ${batchJob.id} ${status}`);
         return {
           jobId: batchJob.id,
           success: false,
         };
       } else if (!status) {
-        console.error(`Failed to retrieve status for batch job ${batchJob.id}`);
+        logger.error(`Failed to retrieve status for batch job ${batchJob.id}`);
         return {
           jobId: batchJob.id,
           success: false,
@@ -148,12 +149,12 @@ export class BatchProcessor {
       } else if (extname(path).toLowerCase() === ".jsonl") {
         inputFiles.push(path);
       } else {
-        console.warn(`Skipping non-JSONL file: ${path}`);
+        logger.warn(`Skipping non-JSONL file: ${path}`);
       }
     }
 
     if (inputFiles.length === 0) {
-      console.warn("No JSONL files found in the provided paths");
+      logger.warn("No JSONL files found in the provided paths");
       return [];
     }
 

@@ -39,7 +39,7 @@ export async function handleJobList(options: { limit: number }): Promise<void> {
       ]);
     }
 
-    console.log(table.toString());
+    logger.log(table.toString());
   } catch (error) {
     logger.error(
       `Failed to fetch jobs: ${error instanceof Error ? error.message : String(error)}`,
