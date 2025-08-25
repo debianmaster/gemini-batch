@@ -4,7 +4,8 @@
   "description": "Batch processing for Google Gemini AI",
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -14,7 +15,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "gemini-batch": "./dist/cli.js"
+    "gemini-batch": "./bin/gemini-batch"
   },
   "scripts": {
     "build": "tsdown",
