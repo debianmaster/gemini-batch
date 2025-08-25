@@ -49,6 +49,132 @@ export async function handleJobList(options: { limit: number }): Promise<void> {
   }
 }
 
+export async function handleJobGet(jobId: string): Promise<void> {
+  await config.load();
+  const processor = new BatchProcessor();
+
+  try {
+    logger.createSpinner(`Fetching job ${jobId}...`);
+    logger.startSpinner();
+
+    const job = await processor.getJob(jobId);
+    logger.stopSpinner();
+
+    if (!job) {
+      logger.error(`Job ${jobId} not found`);
+      process.exit(1);
+    }
+
+    // Display job details in a table format
+    const table = new Table({
+      style: {
+        head: [],
+        border: [],
+      },
+    });
+
+    table.push(
+      ["Job Name", job.name || "-"],
+      ["Display Name", job.displayName || "-"],
+      ["Status", job.state?.replace("JOB_STATE_", "") || "-"],
+      ["Model", job.model || "-"],
+      ["Created Time", job.createTime ? formatDate(job.createTime) : "-"],
+      ["Source File", job.src?.fileName || "-"],
+      ["Destination File", job.dest?.fileName || "-"],
+    );
+
+    logger.log(`\nJob Details:`);
+    logger.log(table.toString());
+
+    if (job.state === "JOB_STATE_SUCCEEDED") {
+      logger.success("Job completed successfully");
+      logger.info(
+        "Use 'gemini-batch job download <job-id>' to download the results",
+      );
+    } else if (job.state === "JOB_STATE_FAILED") {
+      logger.error("Job failed");
+    } else if (job.state === "JOB_STATE_CANCELLED") {
+      logger.warn(" Job was cancelled");
+    } else if (
+      job.state === "JOB_STATE_RUNNING" ||
+      job.state === "JOB_STATE_QUEUED" ||
+      job.state === "JOB_STATE_PENDING"
+    ) {
+      logger.info("Job is currently running or queued");
+    }
+  } catch (error) {
+    logger.stopSpinner();
+    logger.error(
+      `Failed to get job details: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    process.exit(1);
+  } finally {
+    await processor.close();
+  }
+}
+
+export async function handleJobDownload(
+  jobId: string,
+  options: { output?: string },
+): Promise<void> {
+  await config.load();
+  const processor = new BatchProcessor();
+
+  try {
+    logger.createSpinner(`Checking job ${jobId} status...`);
+    logger.startSpinner();
+
+    const job = await processor.getJob(jobId);
+    if (!job) {
+      logger.stopSpinner();
+      logger.error(`Job ${jobId} not found`);
+      process.exit(1);
+    }
+
+    if (job.state !== "JOB_STATE_SUCCEEDED") {
+      logger.stopSpinner();
+      logger.error(
+        `Job ${jobId} is not completed. Current status: ${job.state?.replace("JOB_STATE_", "") || "unknown"}`,
+      );
+      logger.info("Only completed jobs can be downloaded");
+      process.exit(1);
+    }
+
+    logger.stopSpinner();
+    logger.createSpinner(`Downloading results for job ${jobId}...`);
+    logger.startSpinner();
+
+    // Determine output file path
+    const outputDir = resolve(options.output || ".");
+    const outputFile = resolve(
+      outputDir,
+      `${jobId.split("/").pop()}_results.jsonl`,
+    );
+
+    // Ensure output directory exists
+    const fs = await import("fs/promises");
+    await fs.mkdir(outputDir, { recursive: true });
+
+    const success = await processor.downloadJobResults(jobId, outputFile);
+    logger.stopSpinner();
+
+    if (success) {
+      logger.success(`Results downloaded successfully to: ${outputFile}`);
+    } else {
+      logger.error(`Failed to download results for job ${jobId}`);
+      process.exit(1);
+    }
+  } catch (error) {
+    logger.stopSpinner();
+    logger.error(
+      `Error downloading job results: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    process.exit(1);
+  } finally {
+    await processor.close();
+  }
+}
+
 export async function handleJobCancel(jobId: string): Promise<void> {
   await config.load();
   const processor = new BatchProcessor();

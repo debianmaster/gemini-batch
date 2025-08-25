@@ -37,7 +37,7 @@ cli
     }
   });
 
-type JobVerb = "list" | "submit" | "cancel";
+type JobVerb = "list" | "submit" | "cancel" | "get" | "download";
 // Job commands
 cli
   .command("job <verb> [job-id] [...inputs]", "Job management")
@@ -66,6 +66,18 @@ cli
           process.exit(1);
         }
         await job.handleJobCancel(jobId);
+      } else if (verb === "get") {
+        if (!jobId) {
+          logger.error("Job ID is required for get command");
+          process.exit(1);
+        }
+        await job.handleJobGet(jobId);
+      } else if (verb === "download") {
+        if (!jobId) {
+          logger.error("Job ID is required for download command");
+          process.exit(1);
+        }
+        await job.handleJobDownload(jobId, { output: options.output });
       } else if (verb === "submit") {
         const i = inputs ?? [];
         const submitInputs = jobId ? [jobId, ...i] : i;
@@ -76,7 +88,9 @@ cli
         });
       } else {
         logger.error(`Unknown job command: ${verb}`);
-        logger.info("Available job commands: list, cancel, submit");
+        logger.info(
+          "Available job commands: list, cancel, get, download, submit",
+        );
         process.exit(1);
       }
     },
@@ -116,7 +130,7 @@ cli.on("command:*", () => {
   logger.log("");
   logger.info("Available commands:");
   logger.log("  config <list|set-key|set-model|reset> [value]");
-  logger.log("  job <list|submit|cancel> [job-id] [...inputs]");
+  logger.log("  job <list|submit|cancel|get|download> [job-id] [...inputs]");
   logger.log("  file <list|get> [file-name]");
   logger.log("");
   logger.info("Use 'gemini-batch --help' for more information");

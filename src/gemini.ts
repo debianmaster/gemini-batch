@@ -126,6 +126,46 @@ export class GeminiProvider {
       return [];
     }
   }
+  async getJob(jobId: string): Promise<RawGeminiBatchJob | null> {
+    try {
+      const job = await this.client.batches.get({ name: jobId });
+      return job;
+    } catch (error) {
+      logger.error(`Error getting job ${jobId}: ${error}`);
+      return null;
+    }
+  }
+
+  async downloadJobResults(
+    jobId: string,
+    outputFilePath: string,
+  ): Promise<boolean> {
+    try {
+      const job = await this.client.batches.get({ name: jobId });
+      if (job.state?.toString() !== "JOB_STATE_SUCCEEDED") {
+        logger.warn(`Job ${jobId} is not completed. Status: ${job.state}`);
+        return false;
+      }
+
+      if (!job.dest?.fileName) {
+        logger.warn(`Job ${jobId} has no output file`);
+        return false;
+      }
+
+      // Download the result file using the file ID from job.dest.fileName
+      await this.client.files.download({
+        file: job.dest.fileName,
+        downloadPath: outputFilePath,
+      });
+
+      logger.success(`Downloaded job results to: ${outputFilePath}`);
+      return true;
+    } catch (error) {
+      logger.error(`Error downloading job results for ${jobId}: ${error}`);
+      return false;
+    }
+  }
+
   async cancelJob(jobId: string): Promise<boolean> {
     try {
       await this.client.batches.cancel({ name: jobId });

@@ -185,6 +185,19 @@ export class BatchProcessor {
     return await provider.listFiles(limit);
   }
 
+  async getJob(jobId: string) {
+    const provider = this.getProvider();
+    return await provider.getJob(jobId);
+  }
+
+  async downloadJobResults(
+    jobId: string,
+    outputFilePath: string,
+  ): Promise<boolean> {
+    const provider = this.getProvider();
+    return await provider.downloadJobResults(jobId, outputFilePath);
+  }
+
   async cancelJob(jobId: string): Promise<boolean> {
     const provider = this.getProvider();
     return await provider.cancelJob(jobId);
