@@ -14,10 +14,6 @@ export class GeminiProvider {
     });
   }
 
-  private normalizeStatus(status: string): string {
-    return status.toLowerCase().replace(/[\s-]/g, "_");
-  }
-
   async uploadFile(filePath: string): Promise<string> {
     logger.info(`Uploading batch input file ${filePath}...`);
     try {
