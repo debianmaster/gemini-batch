@@ -229,10 +229,12 @@ export async function handleFileCreate(options: {
       const request = {
         key: input.key,
         model: options.model,
-        generationConfig: {
+        // fuck google
+        // https://news.ycombinator.com/item?id=44528356
+        generation_config: {
           temperature: 0, // more predictable and stable
-          responseMimeType: responseSchema ? "application/json" : undefined,
-          responseSchema: responseSchema,
+          response_mime_type: responseSchema ? "application/json" : undefined,
+          response_json_schema: responseSchema,
         },
         request: {
           contents: [
