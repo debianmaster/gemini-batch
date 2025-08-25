@@ -100,4 +100,18 @@ fileCommand
     await file.handleFileGet(fileName);
   });
 
+fileCommand
+  .command("create")
+  .description("Create a new jsonl file for batch processing")
+  .option("--prompt <prompt or path>", "Prompt text or path to prompt file", "")
+  .option(
+    "--input <input>",
+    "File glob pattern (e.g., './input/*.md') or JSON array field (e.g., 'data.json:items')",
+    "",
+  )
+  .option("--output <path>", "Output JSONL file path", "")
+  .action(async (options) => {
+    await file.handleFileCreate(options);
+  });
+
 program.parse();

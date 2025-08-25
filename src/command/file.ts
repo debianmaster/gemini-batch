@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { glob } from "glob";
 import { BatchProcessor } from "../processor.js";
 import { formatDate, logger } from "../utils.js";
 
@@ -91,5 +94,132 @@ export async function handleFileGet(fileName: string): Promise<void> {
     );
   } finally {
     await processor.close();
+  }
+}
+
+interface CreateOptions {
+  prompt: string;
+  input: string;
+  output: string;
+}
+
+export async function handleFileCreate(options: CreateOptions): Promise<void> {
+  try {
+    if (!options.prompt) {
+      logger.error(
+        "Prompt is required. Use --prompt to specify a prompt or path to a prompt file.",
+      );
+      return;
+    }
+
+    if (!options.input) {
+      logger.error(
+        "Input is required. Use --input to specify file patterns or JSON data.",
+      );
+      return;
+    }
+
+    if (!options.output) {
+      logger.error(
+        "Output path is required. Use --output to specify the output JSONL file path.",
+      );
+      return;
+    }
+
+    logger.info("Creating JSONL file for batch processing...");
+
+    let promptText = options.prompt;
+    if (fs.existsSync(options.prompt)) {
+      logger.info(`Reading prompt from file: ${options.prompt}`);
+      promptText = fs.readFileSync(options.prompt, "utf-8").trim();
+    }
+
+    let inputData: string[] = [];
+
+    const jsonArrayMatch = options.input.match(/^(.+\.json):(.+)$/);
+    if (jsonArrayMatch) {
+      const jsonPath = jsonArrayMatch[1];
+      const arrayField = jsonArrayMatch[2];
+
+      if (!jsonPath || !arrayField) {
+        logger.error(
+          "Invalid JSON input format. Use: path/to/file.json:fieldName",
+        );
+        return;
+      }
+
+      if (!fs.existsSync(jsonPath)) {
+        logger.error(`JSON file not found: ${jsonPath}`);
+        return;
+      }
+
+      logger.info(
+        `Reading data from JSON file: ${jsonPath}, field: ${arrayField}`,
+      );
+      const jsonContent = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+      const arrayData = jsonContent[arrayField];
+
+      if (!Array.isArray(arrayData)) {
+        logger.error(`Field "${arrayField}" is not an array in ${jsonPath}`);
+        return;
+      }
+
+      inputData = arrayData.map((item) =>
+        typeof item === "string" ? item : JSON.stringify(item),
+      );
+    } else {
+      logger.info(`Matching files with pattern: ${options.input}`);
+      const matchedFiles = await glob(options.input);
+
+      if (matchedFiles.length === 0) {
+        logger.warn(`No files matched pattern: ${options.input}`);
+        return;
+      }
+
+      logger.info(`Found ${matchedFiles.length} files`);
+
+      for (const filePath of matchedFiles) {
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, "utf-8");
+          inputData.push(content.trim());
+        }
+      }
+    }
+
+    if (inputData.length === 0) {
+      logger.warn("No input data found");
+      return;
+    }
+
+    const jsonlLines = inputData.map((input, index) => {
+      const request = {
+        custom_id: `request-${index + 1}`,
+        contents: [
+          {
+            parts: [
+              {
+                text: `${promptText}\n\n${input}`,
+              },
+            ],
+          },
+        ],
+      };
+      return JSON.stringify(request);
+    });
+
+    const outputDir = path.dirname(options.output);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    fs.writeFileSync(options.output, jsonlLines.join("\n") + "\n");
+
+    logger.success(
+      `Successfully created JSONL file with ${inputData.length} requests: ${options.output}`,
+    );
+  } catch (error) {
+    logger.error(
+      `Failed to create JSONL file: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
