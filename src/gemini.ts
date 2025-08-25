@@ -61,36 +61,6 @@ export class GeminiProvider {
     }
   }
 
-  async checkBatchStatus(batchId: string): Promise<string | null> {
-    try {
-      const job = await this.client.batches.get({ name: batchId });
-      return this.normalizeStatus(job.state || "unknown");
-    } catch (error) {
-      logger.error(`Error checking batch status: ${error}`);
-      return null;
-    }
-  }
-
-  async downloadBatchResults(
-    batchJob: BatchJob,
-    outputFilePath: string,
-  ): Promise<boolean> {
-    try {
-      const job = await this.client.batches.get({ name: batchJob.id });
-      if (job.state?.toString() === "COMPLETED") {
-        // For now, we'll assume the output is available through a different method
-        // This might need to be adjusted based on the actual Gemini batch API
-        logger.success(`Batch job completed: ${job.name}`);
-        return true;
-      }
-      logger.warn(`Batch job not completed. Status: ${job.state}`);
-      return false;
-    } catch (error) {
-      logger.error(`Error downloading batch results: ${error}`);
-      return false;
-    }
-  }
-
   async listJobs(limit?: number): Promise<RawGeminiBatchJob[]> {
     try {
       const pager = await this.client.batches.list();

@@ -1,8 +1,8 @@
 import { promises as fs } from "fs";
-import { extname, join } from "path";
+import { extname } from "path";
 import { config } from "./config.js";
 import { GeminiProvider } from "./gemini.js";
-import type { BatchJob, BatchJobResult } from "./types.js";
+import type { BatchJob } from "./types.js";
 import { logger } from "./utils.js";
 
 export class BatchProcessor {
@@ -41,19 +41,6 @@ export class BatchProcessor {
   async createBatchJob(inputFileId: string): Promise<BatchJob | null> {
     const provider = this.getProvider();
     return await provider.createBatchJob(inputFileId);
-  }
-
-  async checkBatchStatus(batchId: string): Promise<string | null> {
-    const provider = this.getProvider();
-    return await provider.checkBatchStatus(batchId);
-  }
-
-  async downloadBatchResults(
-    batchJob: BatchJob,
-    outputFilePath: string,
-  ): Promise<boolean> {
-    const provider = this.getProvider();
-    return await provider.downloadBatchResults(batchJob, outputFilePath);
   }
 
   async submitJob(inputPath: string): Promise<BatchJob> {

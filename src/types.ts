@@ -6,9 +6,3 @@ export interface BatchJob {
   createdAt?: number;
   completedAt?: number;
 }
-
-export interface BatchJobResult {
-  jobId: string;
-  success: boolean;
-  outputFilePath?: string;
-}
