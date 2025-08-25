@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
 import Table from "cli-table3";
 import { BatchProcessor } from "../processor.js";
 import { formatDate, logger } from "../utils.js";
@@ -149,15 +149,13 @@ export async function handleJobDownload(
     logger.startSpinner();
 
     // Determine output file path
-    const outputDir = resolve(options.output || ".");
-    const outputFile = resolve(
-      outputDir,
-      `${Math.floor(Date.now() / 1000)}_${jobId.split("/").pop()}.jsonl`,
-    );
+    const outputFile = options.output
+      ? resolve(options.output)
+      : resolve(`${Math.floor(Date.now() / 1000)}_${jobId.split("/").pop()}.jsonl`);
 
     // Ensure output directory exists
     const fs = await import("fs/promises");
-    await fs.mkdir(outputDir, { recursive: true });
+    await fs.mkdir(dirname(outputFile), { recursive: true });
 
     const success = await processor.downloadJobResults(jobId, outputFile);
     logger.stopSpinner();
