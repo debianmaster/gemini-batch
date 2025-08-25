@@ -1,6 +1,6 @@
 {
   "name": "gemini-batch",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Batch processing for Google Gemini AI",
   "type": "module",
   "files": [
