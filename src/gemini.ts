@@ -1,3 +1,4 @@
+import path from "node:path";
 import { type BatchJob, GoogleGenAI, type File } from "@google/genai";
 import { logger } from "./utils.js";
 
@@ -21,7 +22,7 @@ export class GeminiProvider {
         file: filePath,
         config: {
           mimeType: "application/json",
-          displayName: `batch-input-${Date.now()}.jsonl`,
+          displayName: path.basename(filePath),
         },
       });
       logger.success(`Uploaded file ${uploadedFile.name}`);
