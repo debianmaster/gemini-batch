@@ -1,12 +1,10 @@
 import { resolve } from "node:path";
 import Table from "cli-table3";
-import { config } from "../config.js";
 import { BatchProcessor } from "../processor.js";
 import { formatDate, logger } from "../utils.js";
 
 // Job command handlers
 export async function handleJobList(options: { limit: number }): Promise<void> {
-  await config.load();
   const processor = new BatchProcessor();
 
   try {
@@ -50,7 +48,6 @@ export async function handleJobList(options: { limit: number }): Promise<void> {
 }
 
 export async function handleJobGet(jobId: string): Promise<void> {
-  await config.load();
   const processor = new BatchProcessor();
 
   try {
@@ -117,7 +114,6 @@ export async function handleJobDownload(
   jobId: string,
   options: { output?: string },
 ): Promise<void> {
-  await config.load();
   const processor = new BatchProcessor();
 
   try {
@@ -141,14 +137,14 @@ export async function handleJobDownload(
     }
 
     logger.stopSpinner();
-    logger.createSpinner(`Downloading results for job ${jobId}...`);
+    logger.createSpinner(`Downloading result...`);
     logger.startSpinner();
 
     // Determine output file path
     const outputDir = resolve(options.output || ".");
     const outputFile = resolve(
       outputDir,
-      `${jobId.split("/").pop()}_results.jsonl`,
+      `${Math.floor(Date.now() / 1000)}_${jobId.split("/").pop()}.jsonl`,
     );
 
     // Ensure output directory exists
@@ -159,9 +155,9 @@ export async function handleJobDownload(
     logger.stopSpinner();
 
     if (success) {
-      logger.success(`Results downloaded successfully to: ${outputFile}`);
+      logger.success(`Result downloaded successfully to ${outputFile}`);
     } else {
-      logger.error(`Failed to download results for job ${jobId}`);
+      logger.error(`Failed to download result for job ${jobId}`);
       process.exit(1);
     }
   } catch (error) {
@@ -176,7 +172,6 @@ export async function handleJobDownload(
 }
 
 export async function handleJobCancel(jobId: string): Promise<void> {
-  await config.load();
   const processor = new BatchProcessor();
 
   try {
@@ -207,8 +202,6 @@ export async function handleJobSubmit(
   inputs: string[],
   options: {
     output: string;
-    maxConcurrent: number;
-    checkInterval: number;
   },
 ): Promise<void> {
   if (inputs.length === 0) {
@@ -225,35 +218,13 @@ export async function handleJobSubmit(
   const outputDir = resolve(options.output);
   const resolvedInputs = inputs.map((input: string) => resolve(input));
 
-  await config.load();
-
-  const apiKey = config.getApiKey();
-  if (!apiKey) {
-    logger.error(
-      `Gemini API key not found. Please set it using 'gemini-batch config set-key YOUR_API_KEY' or set GEMINI_API_KEY environment variable.`,
-    );
-    process.exit(1);
-  }
-
-  if (options.maxConcurrent !== undefined) {
-    config.maxConcurrentJobs = options.maxConcurrent;
-  }
-  if (options.checkInterval !== undefined) {
-    config.checkInterval = options.checkInterval;
-  }
-  await config.save();
-
   const processor = new BatchProcessor();
 
   try {
     logger.createSpinner(`Processing batch jobs with Gemini...`);
     logger.startSpinner();
 
-    const results = await processor.processInputs(
-      resolvedInputs,
-      outputDir,
-      options.maxConcurrent,
-    );
+    const results = await processor.processInputs(resolvedInputs, outputDir);
 
     logger.stopSpinner();
 

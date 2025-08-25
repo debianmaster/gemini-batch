@@ -1,11 +1,9 @@
-import { config } from "../config.js";
 import { BatchProcessor } from "../processor.js";
 import { formatDate, logger } from "../utils.js";
 
 export async function handleFileList(options: {
   limit: number;
 }): Promise<void> {
-  await config.load();
   const processor = new BatchProcessor();
 
   try {
@@ -51,7 +49,6 @@ export async function handleFileList(options: {
 }
 
 export async function handleFileGet(fileName: string): Promise<void> {
-  await config.load();
   const processor = new BatchProcessor();
 
   try {
