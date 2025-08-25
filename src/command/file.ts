@@ -134,6 +134,7 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
       promptText = fs.readFileSync(options.prompt, "utf-8").trim();
     }
 
+    // Collect all input data
     let inputData: string[] = [];
 
     const jsonArrayMatch = options.input.match(/^(.+\.json):(.+)$/);
@@ -180,8 +181,14 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
 
       for (const filePath of matchedFiles) {
         if (fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath, "utf-8");
-          inputData.push(content.trim());
+          try {
+            const content = await fs.promises.readFile(filePath, "utf-8");
+            inputData.push(content.trim());
+          } catch (error) {
+            logger.warn(
+              `Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+            );
+          }
         }
       }
     }
@@ -191,7 +198,19 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
       return;
     }
 
-    const jsonlLines = inputData.map((input, index) => {
+    logger.info(`Processing ${inputData.length} items...`);
+
+    const outputDir = path.dirname(options.output);
+    if (!fs.existsSync(outputDir)) {
+      await fs.promises.mkdir(outputDir, { recursive: true });
+    }
+
+    // Clear the output file first
+    await fs.promises.writeFile(options.output, "");
+
+    // Process and append each item
+    for (let index = 0; index < inputData.length; index++) {
+      const input = inputData[index];
       const request = {
         key: `request-${index + 1}`,
         request: {
@@ -206,15 +225,10 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
           ],
         },
       };
-      return JSON.stringify(request);
-    });
 
-    const outputDir = path.dirname(options.output);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+      const jsonLine = JSON.stringify(request) + "\n";
+      await fs.promises.appendFile(options.output, jsonLine);
     }
-
-    fs.writeFileSync(options.output, jsonlLines.join("\n") + "\n");
 
     logger.success(
       `Successfully created JSONL file with ${inputData.length} requests: ${options.output}`,
