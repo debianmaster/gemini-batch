@@ -111,7 +111,7 @@ fileCommand
   .command("create")
   .description("Create a new jsonl file for batch processing")
   .requiredOption(
-    "-p, --prompt <prompt or path>",
+    "-p, --prompt <prompt_or_path>",
     "Prompt text or path to prompt file",
   )
   .requiredOption(
