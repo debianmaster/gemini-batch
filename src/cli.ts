@@ -1,6 +1,7 @@
 import "dotenv/config";
 import path from "node:path";
 import { Command } from "commander";
+import packageJson from "../package.json" with { type: "json" };
 import * as configCmd from "./command/config.js";
 import * as file from "./command/file.js";
 import * as job from "./command/job.js";
@@ -11,7 +12,7 @@ const program = new Command();
 program
   .name("gemini-batch")
   .description("Batch processing for Google Gemini AI")
-  .version("1.0.0");
+  .version(packageJson.version);
 
 // Config commands
 const configCommand = program
