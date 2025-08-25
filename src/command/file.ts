@@ -194,10 +194,13 @@ export async function handleFileCreate(options: {
 
     // Process and append each item
     for (let index = 0; index < inputData.length; index++) {
-      const input = inputData[index];
+      const input = inputData[index]!;
       const request = {
-        key: `request-${index + 1}`,
+        key: input.key,
         model: options.model,
+        generation_config: {
+          temperature: 0, // more predictable and stable
+        },
         request: {
           contents: [
             {
