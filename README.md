@@ -32,7 +32,10 @@ export GOOGLE_GENERATIVE_AI_API_KEY="your-gemini-key"
 2. **Create a input file:**
 
 ```bash
-gemini-batch file create --prompt "translate this file to Chinese" --input blog/*.md --output batch.jsonl
+gemini-batch file create \
+  --prompt "translate this file to Chinese" \
+  --input "blog/*.md" \
+  --output batch.jsonl
 ```
 
 3. **Submit batch jobs:**
@@ -45,6 +48,7 @@ gemini-batch job submit batch.jsonl
 
 ```bash
 gemini-batch job list
+gemini-batch job get your-job-id
 gemini-batch job download your-job-id
 ```
 
