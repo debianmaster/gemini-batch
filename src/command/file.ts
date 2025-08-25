@@ -193,16 +193,18 @@ export async function handleFileCreate(options: CreateOptions): Promise<void> {
 
     const jsonlLines = inputData.map((input, index) => {
       const request = {
-        custom_id: `request-${index + 1}`,
-        contents: [
-          {
-            parts: [
-              {
-                text: `${promptText}\n\n${input}`,
-              },
-            ],
-          },
-        ],
+        key: `request-${index + 1}`,
+        request: {
+          contents: [
+            {
+              parts: [
+                {
+                  text: `${promptText}\n\n${input}`,
+                },
+              ],
+            },
+          ],
+        },
       };
       return JSON.stringify(request);
     });
