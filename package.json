@@ -19,7 +19,8 @@
   },
   "scripts": {
     "build": "tsdown",
-    "dev": "tsdown --watch"
+    "dev": "tsdown --watch",
+    "release": "./scripts/publish.sh"
   },
   "dependencies": {
     "@google/genai": "1.15.0",
