@@ -94,7 +94,7 @@ export async function handleJobGet(jobId: string): Promise<void> {
     if (job.state === "JOB_STATE_SUCCEEDED") {
       logger.success("Job completed successfully");
       logger.info(
-        "Use 'gemini-batch job download <job-id>' to download the results",
+        `Use 'gemini-batch job download ${job.name}' to download the result`,
       );
     } else if (job.state === "JOB_STATE_FAILED") {
       logger.error("Job failed");
