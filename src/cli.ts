@@ -8,10 +8,12 @@ import { logger } from "./utils.js";
 
 const cli = cac("gemini-batch");
 
+type ConfigVerb = "list" | "set-key" | "set-model" | "reset";
+
 // Config commands
 cli
   .command("config <verb> [value]", "Configuration management")
-  .action(async (verb, value) => {
+  .action(async (verb: ConfigVerb, value?: string) => {
     if (verb === "list") {
       await config.handleConfigList();
     } else if (verb === "set-key") {
@@ -35,6 +37,7 @@ cli
     }
   });
 
+type JobVerb = "list" | "submit" | "cancel";
 // Job commands
 cli
   .command("job <verb> [job-id] [...inputs]", "Job management")
@@ -53,28 +56,33 @@ cli
     default: 5,
     type: [Number],
   })
-  .action(async (verb, jobId, inputs, options) => {
-    if (verb === "list") {
-      await job.handleJobList({ limit: options.limit });
-    } else if (verb === "cancel") {
-      if (!jobId) {
-        logger.error("Job ID is required for cancel command");
+  .action(
+    async (verb: JobVerb, jobId?: string, inputs?: string[], options?) => {
+      if (verb === "list") {
+        await job.handleJobList({ limit: options.limit });
+      } else if (verb === "cancel") {
+        if (!jobId) {
+          logger.error("Job ID is required for cancel command");
+          process.exit(1);
+        }
+        await job.handleJobCancel(jobId);
+      } else if (verb === "submit") {
+        const i = inputs ?? [];
+        const submitInputs = jobId ? [jobId, ...i] : i;
+        await job.handleJobSubmit(submitInputs, {
+          output: options.output,
+          maxConcurrent: options.maxConcurrent,
+          checkInterval: options.checkInterval,
+        });
+      } else {
+        logger.error(`Unknown job command: ${verb}`);
+        logger.info("Available job commands: list, cancel, submit");
         process.exit(1);
       }
-      await job.handleJobCancel(jobId);
-    } else if (verb === "submit") {
-      const submitInputs = jobId ? [jobId, ...inputs] : inputs;
-      await job.handleJobSubmit(submitInputs, {
-        output: options.output,
-        maxConcurrent: options.maxConcurrent,
-        checkInterval: options.checkInterval,
-      });
-    } else {
-      logger.error(`Unknown job command: ${verb}`);
-      logger.info("Available job commands: list, cancel, submit");
-      process.exit(1);
-    }
-  });
+    },
+  );
+
+type FileVerb = "list" | "get";
 
 // File commands
 cli
@@ -83,7 +91,7 @@ cli
     default: 10,
     type: [Number],
   })
-  .action(async (verb, fileName, options) => {
+  .action(async (verb: FileVerb, fileName?: string, options?) => {
     if (verb === "list") {
       await file.handleFileList({ limit: options.limit });
     } else if (verb === "get") {
