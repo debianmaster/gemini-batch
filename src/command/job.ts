@@ -227,10 +227,10 @@ export async function handleJobSubmit(input: string): Promise<void> {
     logger.stopSpinner();
 
     logger.success(`Job submitted successfully!`);
-    logger.info(`Job ID: ${batchJob.name}`);
-    logger.info("Use 'gemini-batch job get <job-id>' to check status");
+    logger.info(`\nJob ID: ${batchJob.name}`);
+    logger.info(`Use 'gemini-batch job get ${batchJob.name}' to check status`);
     logger.info(
-      "Use 'gemini-batch job download <job-id>' to download results when completed",
+      `Use 'gemini-batch job download ${batchJob.name}' to download result when completed`,
     );
   } catch (error) {
     logger.stopSpinner();
