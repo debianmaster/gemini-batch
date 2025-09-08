@@ -1,10 +1,13 @@
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
+import type { BatchJob } from "@google/genai";
 import Table from "cli-table3";
 import { BatchProcessor } from "../processor.js";
 import { formatDate, logger } from "../utils.js";
 
 // Job command handlers
-export async function handleJobList(options: { limit: number }): Promise<void> {
+export async function handleJobList(options: {
+  limit: number;
+}): Promise<BatchJob[]> {
   const processor = new BatchProcessor();
 
   try {
@@ -16,7 +19,7 @@ export async function handleJobList(options: { limit: number }): Promise<void> {
 
     if (jobs.length === 0) {
       logger.warn("No jobs found");
-      return;
+      return [];
     }
 
     const table = new Table({
@@ -46,16 +49,19 @@ export async function handleJobList(options: { limit: number }): Promise<void> {
     }
 
     logger.log(table.toString());
+
+    return jobs;
   } catch (error) {
     logger.error(
       `Failed to fetch jobs: ${error instanceof Error ? error.message : String(error)}`,
     );
+    return [];
   } finally {
     await processor.close();
   }
 }
 
-export async function handleJobGet(jobId: string): Promise<void> {
+export async function handleJobGet(jobId: string): Promise<BatchJob | null> {
   const processor = new BatchProcessor();
 
   try {
@@ -67,7 +73,7 @@ export async function handleJobGet(jobId: string): Promise<void> {
 
     if (!job) {
       logger.error(`Job ${jobId} not found`);
-      process.exit(1);
+      return null;
     }
 
     // Display job details in a table format
@@ -107,12 +113,14 @@ export async function handleJobGet(jobId: string): Promise<void> {
     ) {
       logger.info("Job is currently running or queued");
     }
+
+    return job;
   } catch (error) {
     logger.stopSpinner();
     logger.error(
       `Failed to get job details: ${error instanceof Error ? error.message : String(error)}`,
     );
-    process.exit(1);
+    return null;
   } finally {
     await processor.close();
   }
@@ -121,7 +129,7 @@ export async function handleJobGet(jobId: string): Promise<void> {
 export async function handleJobDownload(
   jobId: string,
   options: { output?: string },
-): Promise<void> {
+): Promise<null | string> {
   const processor = new BatchProcessor();
 
   try {
@@ -132,7 +140,7 @@ export async function handleJobDownload(
     if (!job) {
       logger.stopSpinner();
       logger.error(`Job ${jobId} not found`);
-      process.exit(1);
+      return null;
     }
 
     if (job.state !== "JOB_STATE_SUCCEEDED") {
@@ -141,7 +149,7 @@ export async function handleJobDownload(
         `Job ${jobId} is not completed. Current status: ${job.state?.replace("JOB_STATE_", "") || "unknown"}`,
       );
       logger.info("Only completed jobs can be downloaded");
-      process.exit(1);
+      return null;
     }
 
     logger.stopSpinner();
@@ -168,7 +176,7 @@ export async function handleJobDownload(
         }
       } catch {
         // Path doesn't exist, determine based on extension
-        if (outputPath.endsWith('.jsonl') || outputPath.includes('.')) {
+        if (outputPath.endsWith(".jsonl") || outputPath.includes(".")) {
           // Looks like a file path
           outputFile = outputPath;
         } else {
@@ -190,22 +198,23 @@ export async function handleJobDownload(
 
     if (success) {
       logger.success(`Result downloaded successfully to ${outputFile}`);
+      return outputFile;
     } else {
       logger.error(`Failed to download result for job ${jobId}`);
-      process.exit(1);
+      return null;
     }
   } catch (error) {
     logger.stopSpinner();
     logger.error(
       `Error downloading job results: ${error instanceof Error ? error.message : String(error)}`,
     );
-    process.exit(1);
+    return null;
   } finally {
     await processor.close();
   }
 }
 
-export async function handleJobCancel(jobId: string): Promise<void> {
+export async function handleJobCancel(jobId: string): Promise<boolean> {
   const processor = new BatchProcessor();
 
   try {
@@ -217,31 +226,36 @@ export async function handleJobCancel(jobId: string): Promise<void> {
 
     if (success) {
       logger.success(`Job ${jobId} cancelled successfully`);
+      return true
     } else {
       logger.error(`Failed to cancel job ${jobId}`);
-      process.exit(1);
+      return false;
     }
   } catch (error) {
     logger.stopSpinner();
     logger.error(
       `Error cancelling job: ${error instanceof Error ? error.message : String(error)}`,
     );
-    process.exit(1);
+    return false;
   } finally {
     await processor.close();
   }
 }
 
-export async function handleJobSubmit(input: string): Promise<void> {
+export async function handleJobSubmit(input: string): Promise<BatchJob> {
   if (!input) {
     logger.error("Please provide an input JSONL file or file ID");
     logger.info("");
     logger.info("Examples:");
-    logger.info("  gemini-batch job submit sample.jsonl                    # Local file");
-    logger.info("  gemini-batch job submit files/xyz123                   # Existing file ID");
+    logger.info(
+      "  gemini-batch job submit sample.jsonl                    # Local file",
+    );
+    logger.info(
+      "  gemini-batch job submit files/xyz123                   # Existing file ID",
+    );
     logger.info("");
     logger.info("Use 'gemini-batch file list' to see uploaded files");
-    process.exit(1);
+    throw new Error("Input file or file ID is required");
   }
 
   const processor = new BatchProcessor();
@@ -259,6 +273,8 @@ export async function handleJobSubmit(input: string): Promise<void> {
     logger.info(
       `Use 'gemini-batch job download ${batchJob.name}' to download result when completed`,
     );
+
+    return batchJob;
   } catch (error) {
     logger.stopSpinner();
     logger.error(
@@ -269,11 +285,16 @@ export async function handleJobSubmit(input: string): Promise<void> {
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (errorMessage.includes("File not found with ID")) {
       logger.info("Tip: Use 'gemini-batch file list' to see available files");
-    } else if (errorMessage.includes("not a file") || errorMessage.includes("JSONL")) {
-      logger.info("Tip: Make sure the file path is correct and the file is in JSONL format");
+    } else if (
+      errorMessage.includes("not a file") ||
+      errorMessage.includes("JSONL")
+    ) {
+      logger.info(
+        "Tip: Make sure the file path is correct and the file is in JSONL format",
+      );
     }
 
-    process.exit(1);
+    throw error;
   } finally {
     await processor.close();
   }
