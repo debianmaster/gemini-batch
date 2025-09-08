@@ -2,29 +2,20 @@ import chalk from "chalk";
 import ora, { type Ora } from "ora";
 
 export class Logger {
-  private verbose: boolean;
   spinner: Ora | null = null;
 
-  constructor(options?: { verbose: boolean }) {
-    this.verbose = options?.verbose || false;
-  }
-
-  setVerbose(v: boolean) {
-    this.verbose = v;
-  }
-
-  createSpinner(text: string) {
+  createSpinner(text: string): void {
     this.spinner = createSpinner(text);
   }
 
-  stopSpinner() {
+  stopSpinner(): void {
     if (this.spinner) {
       this.spinner?.stop();
       this.spinner = null;
     }
   }
 
-  startSpinner() {
+  startSpinner(): void {
     if (this.spinner) {
       this.spinner.start();
     }
@@ -64,7 +55,7 @@ export class Logger {
   }
 }
 
-export const logger = new Logger({ verbose: true });
+export const logger: Logger = new Logger();
 
 export function createSpinner(text: string): Ora {
   return ora({
