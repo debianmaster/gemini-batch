@@ -226,7 +226,7 @@ export async function handleJobCancel(jobId: string): Promise<boolean> {
 
     if (success) {
       logger.success(`Job ${jobId} cancelled successfully`);
-      return true
+      return true;
     } else {
       logger.error(`Failed to cancel job ${jobId}`);
       return false;
@@ -242,7 +242,7 @@ export async function handleJobCancel(jobId: string): Promise<boolean> {
   }
 }
 
-export async function handleJobSubmit(input: string): Promise<BatchJob> {
+export async function handleJobSubmit(input: string): Promise<BatchJob | null> {
   if (!input) {
     logger.error("Please provide an input JSONL file or file ID");
     logger.info("");
@@ -255,7 +255,7 @@ export async function handleJobSubmit(input: string): Promise<BatchJob> {
     );
     logger.info("");
     logger.info("Use 'gemini-batch file list' to see uploaded files");
-    throw new Error("Input file or file ID is required");
+    return null;
   }
 
   const processor = new BatchProcessor();
@@ -294,7 +294,7 @@ export async function handleJobSubmit(input: string): Promise<BatchJob> {
       );
     }
 
-    throw error;
+    return null;
   } finally {
     await processor.close();
   }

@@ -56,9 +56,15 @@ jobCommand
 jobCommand
   .command("submit")
   .description("Submit batch processing job")
-  .argument("[input]", "Path to input JSONL file or existing file ID (starts with 'files/')")
+  .argument(
+    "[input]",
+    "Path to input JSONL file or existing file ID (starts with 'files/')",
+  )
   .action(async (input: string) => {
-    await job.handleJobSubmit(input);
+    const result = await job.handleJobSubmit(input);
+    if (!result) {
+      process.exit(1);
+    }
   });
 
 jobCommand
@@ -66,7 +72,10 @@ jobCommand
   .description("Cancel job")
   .argument("<jobId>", "ID of the job to cancel")
   .action(async (jobId: string) => {
-    await job.handleJobCancel(jobId);
+    const result = await job.handleJobCancel(jobId);
+    if (!result) {
+      process.exit(1);
+    }
   });
 
 jobCommand
@@ -74,7 +83,10 @@ jobCommand
   .description("Get job details")
   .argument("<jobId>", "ID of the job to get")
   .action(async (jobId: string) => {
-    await job.handleJobGet(jobId);
+    const result = await job.handleJobGet(jobId);
+    if (!result) {
+      process.exit(1);
+    }
   });
 
 jobCommand
@@ -84,9 +96,12 @@ jobCommand
   .option("-o, --output <dir>", "Output directory for results")
   .action(async (jobId: string, options) => {
     await config.load();
-    await job.handleJobDownload(jobId, {
+    const result = await job.handleJobDownload(jobId, {
       output: options.output ?? path.resolve(config.configDir, "results"),
     });
+    if (!result) {
+      process.exit(1);
+    }
   });
 
 // File commands
@@ -105,7 +120,10 @@ fileCommand
   .description("Get file details")
   .argument("<fileName>", "Name or display name of the file")
   .action(async (fileName: string) => {
-    await file.handleFileGet(fileName);
+    const result = await file.handleFileGet(fileName);
+    if (!result) {
+      process.exit(1);
+    }
   });
 
 fileCommand
@@ -120,16 +138,15 @@ fileCommand
     "File glob pattern (e.g., './input/*.md') or JSON array field (e.g., 'data.json:items')",
   )
   .requiredOption("-o, --output <path>", "Output JSONL file path")
-  .option(
-    "--response-schema <path>",
-    "Path to JSON file containing response schema for structured output",
-  )
   .action(async (options) => {
     await config.load();
-    await file.handleFileCreate({
+    const result = await file.handleFileCreate({
       ...options,
       model: config.getModel(),
     });
+    if (!result) {
+      process.exit(1);
+    }
   });
 
 program.parse();

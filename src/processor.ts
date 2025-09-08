@@ -38,14 +38,14 @@ export class BatchProcessor {
     let fileId: string;
 
     // Check if input is a file ID (starts with 'files/' pattern) or a local file path
-    if (input.startsWith('files/')) {
+    if (input.startsWith("files/")) {
       // Input is a file ID, validate it exists
       logger.info(`Using existing file ID: ${input}`);
       const file = await provider.getFile(input);
       if (!file) {
         throw new Error(`File not found with ID: ${input}`);
       }
-      if (file.state !== 'ACTIVE') {
+      if (file.state !== "ACTIVE") {
         throw new Error(`File ${input} is not active. State: ${file.state}`);
       }
       fileId = input;
@@ -82,6 +82,11 @@ export class BatchProcessor {
   async listFiles(limit?: number) {
     const provider = this.getProvider();
     return await provider.listFiles(limit);
+  }
+
+  async getFile(fileId: string) {
+    const provider = this.getProvider();
+    return await provider.getFile(fileId);
   }
 
   async getJob(jobId: string) {

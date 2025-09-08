@@ -1,13 +1,14 @@
 import fs from "node:fs";
-import prettyBytes from "pretty-bytes";
 import path from "node:path";
+import type { File } from "@google/genai";
 import { glob } from "glob";
+import prettyBytes from "pretty-bytes";
 import { BatchProcessor } from "../processor.js";
 import { formatDate, logger } from "../utils.js";
 
 export async function handleFileList(options: {
   limit: number;
-}): Promise<void> {
+}): Promise<File[]> {
   const processor = new BatchProcessor();
 
   try {
@@ -19,7 +20,7 @@ export async function handleFileList(options: {
 
     if (files.length === 0) {
       logger.warn("No files found");
-      return;
+      return [];
     }
 
     const Table = (await import("cli-table3")).default;
@@ -42,35 +43,34 @@ export async function handleFileList(options: {
     }
 
     logger.log(table.toString());
+
+    return files;
   } catch (error) {
     logger.stopSpinner();
     logger.error(
       `Failed to fetch files: ${error instanceof Error ? error.message : String(error)}`,
     );
+    throw error;
   } finally {
     await processor.close();
   }
 }
 
-export async function handleFileGet(fileName: string): Promise<void> {
+export async function handleFileGet(fileName: string): Promise<File | null> {
   const processor = new BatchProcessor();
 
   try {
     logger.createSpinner(`Fetching file details for ${fileName}...`);
     logger.startSpinner();
 
-    const files = await processor.listFiles();
+    const file = await processor.getFile(fileName);
     logger.stopSpinner();
-
-    const file = files.find(
-      (f) => f.name === fileName || f.displayName === fileName,
-    );
 
     if (!file) {
       logger.error(`File not found: ${fileName}`);
       logger.info("");
       logger.info("Use 'gemini-batch file list' to see available files");
-      process.exit(1);
+      return null;
     }
 
     logger.info(`File Details:`);
@@ -88,11 +88,13 @@ export async function handleFileGet(fileName: string): Promise<void> {
     if (file.uri) {
       logger.log(`URI: ${file.uri}`);
     }
+    return file;
   } catch (error) {
     logger.stopSpinner();
     logger.error(
       `Failed to fetch file details: ${error instanceof Error ? error.message : String(error)}`,
     );
+    throw error;
   } finally {
     await processor.close();
   }
@@ -103,8 +105,7 @@ export async function handleFileCreate(options: {
   input: string;
   output: string;
   model: string;
-  responseSchema?: string;
-}): Promise<void> {
+}): Promise<boolean> {
   try {
     logger.info("Creating JSONL file for batch processing...");
 
@@ -112,33 +113,6 @@ export async function handleFileCreate(options: {
     if (fs.existsSync(options.prompt)) {
       logger.info(`Reading prompt from file: ${options.prompt}`);
       promptText = fs.readFileSync(options.prompt, "utf-8").trim();
-    }
-
-    // Handle response schema
-    let responseSchema = undefined;
-    if (options.responseSchema) {
-      if (fs.existsSync(options.responseSchema)) {
-        logger.info(
-          `Reading response schema from file: ${options.responseSchema}`,
-        );
-        try {
-          const schemaContent = fs.readFileSync(
-            options.responseSchema,
-            "utf-8",
-          );
-          responseSchema = JSON.parse(schemaContent);
-        } catch (error) {
-          logger.error(
-            `Failed to parse response schema file: ${error instanceof Error ? error.message : String(error)}`,
-          );
-          return;
-        }
-      } else {
-        logger.error(
-          `Response schema file not found: ${options.responseSchema}`,
-        );
-        return;
-      }
     }
 
     // Collect all input data
@@ -153,12 +127,12 @@ export async function handleFileCreate(options: {
         logger.error(
           "Invalid JSON input format. Use: path/to/file.json:fieldName",
         );
-        return;
+        return false;
       }
 
       if (!fs.existsSync(jsonPath)) {
         logger.error(`JSON file not found: ${jsonPath}`);
-        return;
+        return false;
       }
 
       logger.info(
@@ -169,7 +143,7 @@ export async function handleFileCreate(options: {
 
       if (!Array.isArray(arrayData)) {
         logger.error(`Field "${arrayField}" is not an array in ${jsonPath}`);
-        return;
+        return false;
       }
 
       inputData = arrayData.map((item, index) => {
@@ -184,7 +158,7 @@ export async function handleFileCreate(options: {
 
       if (matchedFiles.length === 0) {
         logger.warn(`No files matched pattern: ${options.input}`);
-        return;
+        return false;
       }
 
       logger.info(`Found ${matchedFiles.length} files`);
@@ -194,7 +168,7 @@ export async function handleFileCreate(options: {
         const bBasename = path.basename(b);
         return aBasename.localeCompare(bBasename, undefined, {
           numeric: true,
-          sensitivity: 'base'
+          sensitivity: "base",
         });
       });
 
@@ -217,7 +191,7 @@ export async function handleFileCreate(options: {
 
     if (inputData.length === 0) {
       logger.warn("No input data found");
-      return;
+      return false;
     }
 
     logger.info(`Processing ${inputData.length} items...`);
@@ -245,12 +219,12 @@ export async function handleFileCreate(options: {
           // response_schema: responseSchema,
         },
         request: {
-          "system_instruction": {
-            "parts": [
+          system_instruction: {
+            parts: [
               {
-                "text": promptText
-              }
-            ]
+                text: promptText,
+              },
+            ],
           },
           contents: [
             {
@@ -271,9 +245,12 @@ export async function handleFileCreate(options: {
     logger.success(
       `Successfully created JSONL file with ${inputData.length} requests: ${options.output}`,
     );
+
+    return true;
   } catch (error) {
     logger.error(
       `Failed to create JSONL file: ${error instanceof Error ? error.message : String(error)}`,
     );
+    return false;
   }
 }
