@@ -3,9 +3,20 @@ import ora, { type Ora } from "ora";
 
 export class Logger {
   spinner: Ora | null = null;
+  private silent = false;
+
+  setSilent(silent: boolean): void {
+    this.silent = silent;
+    if (silent && this.spinner) {
+      this.spinner.stop();
+      this.spinner = null;
+    }
+  }
 
   createSpinner(text: string): void {
-    this.spinner = createSpinner(text);
+    if (!this.silent) {
+      this.spinner = createSpinner(text);
+    }
   }
 
   stopSpinner(): void {
@@ -22,6 +33,10 @@ export class Logger {
   }
 
   private output(message: string): void {
+    if (this.silent) {
+      return;
+    }
+
     if (this.spinner) {
       // 如果有 spinner 在运行，先停止它，输出消息，然后重新启动
       const text = this.spinner.text;

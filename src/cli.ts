@@ -6,6 +6,7 @@ import * as configCmd from "./command/config.js";
 import * as file from "./command/file.js";
 import * as job from "./command/job.js";
 import { config } from "./config.js";
+import { logger } from "./utils.js";
 
 const program = new Command();
 
@@ -60,8 +61,12 @@ jobCommand
     "[input]",
     "Path to input JSONL file or existing file ID (starts with 'files/')",
   )
-  .action(async (input: string) => {
-    const result = await job.handleJobSubmit(input);
+  .option("--json", "Output in JSON format")
+  .action(async (input: string, options) => {
+    if (options.json) {
+      logger.setSilent(true);
+    }
+    const result = await job.handleJobSubmit(input, options);
     if (!result) {
       process.exit(1);
     }
@@ -82,8 +87,12 @@ jobCommand
   .command("get")
   .description("Get job details")
   .argument("<jobId>", "ID of the job to get")
-  .action(async (jobId: string) => {
-    const result = await job.handleJobGet(jobId);
+  .option("--json", "Output in JSON format")
+  .action(async (jobId: string, options) => {
+    if (options.json) {
+      logger.setSilent(true);
+    }
+    const result = await job.handleJobGet(jobId, options);
     if (!result) {
       process.exit(1);
     }
@@ -94,10 +103,15 @@ jobCommand
   .description("Download job result")
   .argument("<jobId>", "ID of the job to download results for")
   .option("-o, --output <dir>", "Output directory for results")
+  .option("--json", "Output in JSON format")
   .action(async (jobId: string, options) => {
+    if (options.json) {
+      logger.setSilent(true);
+    }
     await config.load();
     const result = await job.handleJobDownload(jobId, {
       output: options.output ?? path.resolve(config.configDir, "results"),
+      json: options.json,
     });
     if (!result) {
       process.exit(1);

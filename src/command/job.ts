@@ -61,7 +61,10 @@ export async function handleJobList(options: {
   }
 }
 
-export async function handleJobGet(jobId: string): Promise<BatchJob | null> {
+export async function handleJobGet(
+  jobId: string,
+  options?: { json?: boolean },
+): Promise<BatchJob | null> {
   const processor = new BatchProcessor();
 
   try {
@@ -72,54 +75,80 @@ export async function handleJobGet(jobId: string): Promise<BatchJob | null> {
     logger.stopSpinner();
 
     if (!job) {
-      logger.error(`Job ${jobId} not found`);
+      if (options?.json) {
+        console.log(JSON.stringify({ error: `Job ${jobId} not found` }));
+      } else {
+        logger.error(`Job ${jobId} not found`);
+      }
       return null;
     }
 
-    // Display job details in a table format
-    const table = new Table({
-      style: {
-        head: [],
-        border: [],
-      },
-    });
-
-    table.push(
-      ["Job Name", job.name || "-"],
-      ["Display Name", job.displayName || "-"],
-      ["Status", job.state?.replace("JOB_STATE_", "") || "-"],
-      ["Model", job.model || "-"],
-      ["Created Time", job.createTime ? formatDate(job.createTime) : "-"],
-      ["End Time", job.endTime ? formatDate(job.endTime) : "-"],
-      ["Destination File", job.dest?.fileName || "-"],
-    );
-
-    logger.log(`\nJob Details:`);
-    logger.log(table.toString());
-
-    if (job.state === "JOB_STATE_SUCCEEDED") {
-      logger.success("Job completed successfully");
-      logger.info(
-        `Use 'gemini-batch job download ${job.name}' to download the result`,
+    if (options?.json) {
+      console.log(
+        JSON.stringify({
+          name: job.name,
+          displayName: job.displayName,
+          state: job.state,
+          model: job.model,
+          createTime: job.createTime,
+          endTime: job.endTime,
+          destFileName: job.dest?.fileName,
+        }),
       );
-    } else if (job.state === "JOB_STATE_FAILED") {
-      logger.error("Job failed");
-    } else if (job.state === "JOB_STATE_CANCELLED") {
-      logger.warn(" Job was cancelled");
-    } else if (
-      job.state === "JOB_STATE_RUNNING" ||
-      job.state === "JOB_STATE_QUEUED" ||
-      job.state === "JOB_STATE_PENDING"
-    ) {
-      logger.info("Job is currently running or queued");
+    } else {
+      // Display job details in a table format
+      const table = new Table({
+        style: {
+          head: [],
+          border: [],
+        },
+      });
+
+      table.push(
+        ["Job Name", job.name || "-"],
+        ["Display Name", job.displayName || "-"],
+        ["Status", job.state?.replace("JOB_STATE_", "") || "-"],
+        ["Model", job.model || "-"],
+        ["Created Time", job.createTime ? formatDate(job.createTime) : "-"],
+        ["End Time", job.endTime ? formatDate(job.endTime) : "-"],
+        ["Destination File", job.dest?.fileName || "-"],
+      );
+
+      logger.log(`\nJob Details:`);
+      logger.log(table.toString());
+
+      if (job.state === "JOB_STATE_SUCCEEDED") {
+        logger.success("Job completed successfully");
+        logger.info(
+          `Use 'gemini-batch job download ${job.name}' to download the result`,
+        );
+      } else if (job.state === "JOB_STATE_FAILED") {
+        logger.error("Job failed");
+      } else if (job.state === "JOB_STATE_CANCELLED") {
+        logger.warn("Job was cancelled");
+      } else if (
+        job.state === "JOB_STATE_RUNNING" ||
+        job.state === "JOB_STATE_QUEUED" ||
+        job.state === "JOB_STATE_PENDING"
+      ) {
+        logger.info("Job is currently running or queued");
+      }
     }
 
     return job;
   } catch (error) {
     logger.stopSpinner();
-    logger.error(
-      `Failed to get job details: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    if (options?.json) {
+      console.log(
+        JSON.stringify({
+          error: `Failed to get job details: ${error instanceof Error ? error.message : String(error)}`,
+        }),
+      );
+    } else {
+      logger.error(
+        `Failed to get job details: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
     return null;
   } finally {
     await processor.close();
@@ -128,7 +157,7 @@ export async function handleJobGet(jobId: string): Promise<BatchJob | null> {
 
 export async function handleJobDownload(
   jobId: string,
-  options: { output?: string },
+  options: { output?: string; json?: boolean },
 ): Promise<null | string> {
   const processor = new BatchProcessor();
 
@@ -139,16 +168,29 @@ export async function handleJobDownload(
     const job = await processor.getJob(jobId);
     if (!job) {
       logger.stopSpinner();
-      logger.error(`Job ${jobId} not found`);
+      if (options.json) {
+        console.log(JSON.stringify({ error: `Job ${jobId} not found` }));
+      } else {
+        logger.error(`Job ${jobId} not found`);
+      }
       return null;
     }
 
     if (job.state !== "JOB_STATE_SUCCEEDED") {
       logger.stopSpinner();
-      logger.error(
-        `Job ${jobId} is not completed. Current status: ${job.state?.replace("JOB_STATE_", "") || "unknown"}`,
-      );
-      logger.info("Only completed jobs can be downloaded");
+      if (options.json) {
+        console.log(
+          JSON.stringify({
+            error: `Job ${jobId} is not completed. Current status: ${job.state?.replace("JOB_STATE_", "") || "unknown"}`,
+            currentState: job.state,
+          }),
+        );
+      } else {
+        logger.error(
+          `Job ${jobId} is not completed. Current status: ${job.state?.replace("JOB_STATE_", "") || "unknown"}`,
+        );
+        logger.info("Only completed jobs can be downloaded");
+      }
       return null;
     }
 
@@ -197,17 +239,42 @@ export async function handleJobDownload(
     logger.stopSpinner();
 
     if (success) {
-      logger.success(`Result downloaded successfully to ${outputFile}`);
+      if (options.json) {
+        console.log(
+          JSON.stringify({
+            success: true,
+            outputFile: outputFile,
+            jobId: jobId,
+          }),
+        );
+      } else {
+        logger.success(`Result downloaded successfully to ${outputFile}`);
+      }
       return outputFile;
     } else {
-      logger.error(`Failed to download result for job ${jobId}`);
+      if (options.json) {
+        console.log(
+          JSON.stringify({
+            error: `Failed to download result for job ${jobId}`,
+          }),
+        );
+      } else {
+        logger.error(`Failed to download result for job ${jobId}`);
+      }
       return null;
     }
   } catch (error) {
     logger.stopSpinner();
-    logger.error(
-      `Error downloading job results: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (options.json) {
+      console.log(
+        JSON.stringify({
+          error: `Error downloading job results: ${errorMessage}`,
+        }),
+      );
+    } else {
+      logger.error(`Error downloading job results: ${errorMessage}`);
+    }
     return null;
   } finally {
     await processor.close();
@@ -242,19 +309,30 @@ export async function handleJobCancel(jobId: string): Promise<boolean> {
   }
 }
 
-export async function handleJobSubmit(input: string): Promise<BatchJob | null> {
+export async function handleJobSubmit(
+  input: string,
+  options?: { json?: boolean },
+): Promise<BatchJob | null> {
   if (!input) {
-    logger.error("Please provide an input JSONL file or file ID");
-    logger.info("");
-    logger.info("Examples:");
-    logger.info(
-      "  gemini-batch job submit sample.jsonl                    # Local file",
-    );
-    logger.info(
-      "  gemini-batch job submit files/xyz123                   # Existing file ID",
-    );
-    logger.info("");
-    logger.info("Use 'gemini-batch file list' to see uploaded files");
+    if (options?.json) {
+      console.log(
+        JSON.stringify({
+          error: "Please provide an input JSONL file or file ID",
+        }),
+      );
+    } else {
+      logger.error("Please provide an input JSONL file or file ID");
+      logger.info("");
+      logger.info("Examples:");
+      logger.info(
+        "  gemini-batch job submit sample.jsonl                    # Local file",
+      );
+      logger.info(
+        "  gemini-batch job submit files/xyz123                   # Existing file ID",
+      );
+      logger.info("");
+      logger.info("Use 'gemini-batch file list' to see uploaded files");
+    }
     return null;
   }
 
@@ -268,30 +346,55 @@ export async function handleJobSubmit(input: string): Promise<BatchJob | null> {
 
     logger.stopSpinner();
 
-    logger.success(`Job submitted successfully!`);
-    logger.info(`Use 'gemini-batch job get ${batchJob.name}' to check status`);
-    logger.info(
-      `Use 'gemini-batch job download ${batchJob.name}' to download result when completed`,
-    );
+    if (options?.json) {
+      console.log(
+        JSON.stringify({
+          success: true,
+          job: {
+            name: batchJob.name,
+            displayName: batchJob.displayName,
+            state: batchJob.state,
+            createTime: batchJob.createTime,
+            model: batchJob.model,
+          },
+        }),
+      );
+    } else {
+      logger.success(`Job submitted successfully!`);
+      logger.info(
+        `Use 'gemini-batch job get ${batchJob.name}' to check status`,
+      );
+      logger.info(
+        `Use 'gemini-batch job download ${batchJob.name}' to download result when completed`,
+      );
+    }
 
     return batchJob;
   } catch (error) {
     logger.stopSpinner();
-    logger.error(
-      `Job submission failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
 
-    // Provide helpful hints based on the error
     const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage.includes("File not found with ID")) {
-      logger.info("Tip: Use 'gemini-batch file list' to see available files");
-    } else if (
-      errorMessage.includes("not a file") ||
-      errorMessage.includes("JSONL")
-    ) {
-      logger.info(
-        "Tip: Make sure the file path is correct and the file is in JSONL format",
+
+    if (options?.json) {
+      console.log(
+        JSON.stringify({
+          error: `Job submission failed: ${errorMessage}`,
+        }),
       );
+    } else {
+      logger.error(`Job submission failed: ${errorMessage}`);
+
+      // Provide helpful hints based on the error
+      if (errorMessage.includes("File not found with ID")) {
+        logger.info("Tip: Use 'gemini-batch file list' to see available files");
+      } else if (
+        errorMessage.includes("not a file") ||
+        errorMessage.includes("JSONL")
+      ) {
+        logger.info(
+          "Tip: Make sure the file path is correct and the file is in JSONL format",
+        );
+      }
     }
 
     return null;
