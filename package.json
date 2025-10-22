@@ -42,14 +42,14 @@
     "gemini",
     "batch"
   ],
-  "author": "zoubingwu@gmail.com",
+  "author": "debianmaster@gmail.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/zoubingwu/gemini-batch/issues"
+    "url": "https://github.com/debianmaster/gemini-batch/issues"
   },
-  "homepage": "https://github.com/zoubingwu/gemini-batch#readme",
+  "homepage": "https://github.com/debianmaster/gemini-batch#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zoubingwu/gemini-batch.git"
+    "url": "git+https://github.com/debianmaster/gemini-batch.git"
   }
 }

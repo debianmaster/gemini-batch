@@ -158,4 +158,4 @@ gh release create "v$NEW_VERSION" \
 
 print_success "🎉 Release v$NEW_VERSION has been published successfully!"
 print_info "📦 NPM: https://www.npmjs.com/package/gemini-batch"
-print_info "🏷️  GitHub Release: https://github.com/zoubingwu/gemini-batch/releases/tag/v$NEW_VERSION"
+print_info "🏷️  GitHub Release: https://github.com/debianmaster/gemini-batch/releases/tag/v$NEW_VERSION"

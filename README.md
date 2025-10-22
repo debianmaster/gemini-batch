@@ -3,6 +3,7 @@
 A TypeScript CLI tool for managing batch processing jobs with Google Gemini API.
 
 **Use cases:**
+
 - Batch content tagging and classification
 - Large-scale file translation
 - Bulk text analysis and processing
@@ -12,7 +13,7 @@ Learn more about [Gemini Batch Mode](https://ai.google.dev/gemini-api/docs/batch
 ## Installation
 
 ```bash
-npm install -g gemini-batch
+npm install -g gemini-batch-cli
 ```
 
 ## Quick Start
@@ -54,7 +55,10 @@ gemini-batch job download your-job-id
 
 For detailed usage, run `gemini-batch --help` or `gemini-batch <command> --help`.
 
-
 ## License
 
 MIT
+
+## Original Author
+
+https://github.com/zoubingwu/gemini-batch
