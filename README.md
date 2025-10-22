@@ -30,7 +30,15 @@ export GEMINI_API_KEY="your-gemini-key"
 export GOOGLE_GENERATIVE_AI_API_KEY="your-gemini-key"
 ```
 
-2. **Create a input file:**
+2. **Check job status and download results:**
+
+```bash
+gemini-batch job list
+gemini-batch job get your-job-id
+gemini-batch job download your-job-id
+```
+
+3. **Create a input file:**
 
 ```bash
 gemini-batch file create \
@@ -39,18 +47,10 @@ gemini-batch file create \
   --output batch.jsonl
 ```
 
-3. **Submit batch jobs:**
+4. **Submit batch jobs:**
 
 ```bash
 gemini-batch job submit batch.jsonl
-```
-
-4. **Check job status and download results:**
-
-```bash
-gemini-batch job list
-gemini-batch job get your-job-id
-gemini-batch job download your-job-id
 ```
 
 For detailed usage, run `gemini-batch --help` or `gemini-batch <command> --help`.
